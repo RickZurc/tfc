@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Dialog,
   DialogContent,
@@ -133,33 +141,157 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function OrdersIndex() {
   const { orders, stats, filters } = usePage<PageProps>().props;
   const [searchQuery, setSearchQuery] = useState(filters.search || '');
-  const [statusFilter, setStatusFilter] = useState(filters.status || '');
-  const [dateFrom, setDateFrom] = useState(filters.date_from || '');
-  const [dateTo, setDateTo] = useState(filters.date_to || '');
+  const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(
+    filters.date_from ? new Date(filters.date_from) : undefined
+  );
+  const [dateTo, setDateTo] = useState<Date | undefined>(
+    filters.date_to ? new Date(filters.date_to) : undefined
+  );
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
+  // Sync state with URL filters when they change
+  useEffect(() => {
+    setSearchQuery(filters.search || '');
+    setStatusFilter(filters.status || 'all');
+    setDateFrom(filters.date_from ? new Date(filters.date_from) : undefined);
+    setDateTo(filters.date_to ? new Date(filters.date_to) : undefined);
+  }, [filters]);
+
   const handleSearch = () => {
-    router.get('/orders', {
-      search: searchQuery,
-      status: statusFilter,
-      date_from: dateFrom,
-      date_to: dateTo,
-    }, {
+    const params: Record<string, any> = {};
+    
+    if (searchQuery.trim()) {
+      params.search = searchQuery.trim();
+    }
+    
+    if (statusFilter !== 'all' && statusFilter) {
+      params.status = statusFilter;
+    }
+    
+    if (dateFrom) {
+      params.date_from = dateFrom.toISOString().split('T')[0];
+    }
+    
+    if (dateTo) {
+      params.date_to = dateTo.toISOString().split('T')[0];
+    }
+
+    router.get('/orders', params, {
       preserveState: true,
       replace: true,
     });
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleStatusChange = (value: string) => {
+    setStatusFilter(value);
+    // Trigger search immediately when status changes
+    setTimeout(() => {
+      const params: Record<string, any> = {};
+      
+      if (searchQuery.trim()) {
+        params.search = searchQuery.trim();
+      }
+      
+      if (value !== 'all' && value) {
+        params.status = value;
+      }
+      
+      if (dateFrom) {
+        params.date_from = dateFrom.toISOString().split('T')[0];
+      }
+      
+      if (dateTo) {
+        params.date_to = dateTo.toISOString().split('T')[0];
+      }
+
+      router.get('/orders', params, {
+        preserveState: true,
+        replace: true,
+      });
+    }, 0);
+  };
+
+  const handleDateFromChange = (date: Date | undefined) => {
+    setDateFrom(date);
+    // Trigger search immediately when date changes
+    setTimeout(() => {
+      const params: Record<string, any> = {};
+      
+      if (searchQuery.trim()) {
+        params.search = searchQuery.trim();
+      }
+      
+      if (statusFilter !== 'all' && statusFilter) {
+        params.status = statusFilter;
+      }
+      
+      if (date) {
+        params.date_from = date.toISOString().split('T')[0];
+      }
+      
+      if (dateTo) {
+        params.date_to = dateTo.toISOString().split('T')[0];
+      }
+
+      router.get('/orders', params, {
+        preserveState: true,
+        replace: true,
+      });
+    }, 0);
+  };
+
+  const handleDateToChange = (date: Date | undefined) => {
+    setDateTo(date);
+    // Trigger search immediately when date changes
+    setTimeout(() => {
+      const params: Record<string, any> = {};
+      
+      if (searchQuery.trim()) {
+        params.search = searchQuery.trim();
+      }
+      
+      if (statusFilter !== 'all' && statusFilter) {
+        params.status = statusFilter;
+      }
+      
+      if (dateFrom) {
+        params.date_from = dateFrom.toISOString().split('T')[0];
+      }
+      
+      if (date) {
+        params.date_to = date.toISOString().split('T')[0];
+      }
+
+      router.get('/orders', params, {
+        preserveState: true,
+        replace: true,
+      });
+    }, 0);
+  };
+
   const handleReset = () => {
     setSearchQuery('');
-    setStatusFilter('');
-    setDateFrom('');
-    setDateTo('');
+    setStatusFilter('all');
+    setDateFrom(undefined);
+    setDateTo(undefined);
     router.get('/orders', {}, {
       preserveState: true,
       replace: true,
     });
   };
+
+  // Check if any filters are active
+  const hasActiveFilters = searchQuery.trim() !== '' || 
+                          statusFilter !== 'all' || 
+                          dateFrom !== undefined || 
+                          dateTo !== undefined;
 
   const printReceipt = (order: Order) => {
     const printWindow = window.open('', '_blank');
@@ -284,6 +416,11 @@ export default function OrdersIndex() {
             <CardTitle className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
               Filters
+              {hasActiveFilters && (
+                <Badge variant="secondary" className="ml-2">
+                  Active
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -291,37 +428,37 @@ export default function OrdersIndex() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
-                  placeholder="Search order number..."
+                  placeholder="Search by order number, customer, or cashier..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   className="pl-10"
                 />
               </div>
 
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="">All Status</option>
-                <option value="completed">Completed</option>
-                <option value="pending">Pending</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="refunded">Refunded</option>
-              </select>
+              <Select value={statusFilter} onValueChange={handleStatusChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="refunded">Refunded</SelectItem>
+                </SelectContent>
+              </Select>
 
-              <Input
-                type="date"
+              <DatePicker
+                date={dateFrom}
+                onDateChange={handleDateFromChange}
                 placeholder="From date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
               />
 
-              <Input
-                type="date"
+              <DatePicker
+                date={dateTo}
+                onDateChange={handleDateToChange}
                 placeholder="To date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
               />
 
               <div className="flex gap-2">
@@ -340,14 +477,28 @@ export default function OrdersIndex() {
         {/* Orders List */}
         <Card>
           <CardHeader>
-            <CardTitle>Sales History</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              <span>Sales History</span>
+              {hasActiveFilters && (
+                <span className="text-sm text-muted-foreground">
+                  Showing filtered results
+                </span>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {orders.data.length === 0 ? (
                 <div className="text-center py-8">
                   <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-muted-foreground">No sales found</p>
+                  <p className="text-muted-foreground">
+                    {hasActiveFilters ? 'No sales found matching your filters' : 'No sales found'}
+                  </p>
+                  {hasActiveFilters && (
+                    <Button variant="outline" onClick={handleReset} className="mt-2">
+                      Clear filters
+                    </Button>
+                  )}
                 </div>
               ) : (
                 orders.data.map((order) => (

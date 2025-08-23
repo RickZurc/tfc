@@ -16,8 +16,8 @@ class OrderController extends Controller
         $query = Order::with(['user', 'customer', 'items.product'])
             ->orderBy('created_at', 'desc');
 
-        // Filter by status if provided
-        if ($request->has('status') && $request->status !== '') {
+        // Filter by status if provided (but not 'all')
+        if ($request->has('status') && $request->status !== '' && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
@@ -30,9 +30,18 @@ class OrderController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        // Search by order number
+        // Search by order number, customer name, or cashier name
         if ($request->has('search') && $request->search) {
-            $query->where('order_number', 'like', '%'.$request->search.'%');
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('order_number', 'like', '%'.$searchTerm.'%')
+                  ->orWhereHas('customer', function ($customerQuery) use ($searchTerm) {
+                      $customerQuery->where('name', 'like', '%'.$searchTerm.'%');
+                  })
+                  ->orWhereHas('user', function ($userQuery) use ($searchTerm) {
+                      $userQuery->where('name', 'like', '%'.$searchTerm.'%');
+                  });
+            });
         }
 
         $orders = $query->paginate(20)->withQueryString();
