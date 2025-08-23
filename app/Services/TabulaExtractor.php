@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\Process;
 
 class TabulaExtractor
 {
@@ -30,10 +30,10 @@ class TabulaExtractor
      * Extract tables to CSV (best for piping into further parsing).
      *
      * @param  string  $pdfPath  Absolute path to input PDF
-     * @param  string  $outCsv   Absolute path to output CSV file
-     * @param  string  $pages    e.g. "all", "1", "1-3", "1,3,5"
-     * @param  string  $mode     "lattice" (lines) or "stream" (whitespace)
-     * @param  string|null $area Optional area: "top,left,bottom,right" in points
+     * @param  string  $outCsv  Absolute path to output CSV file
+     * @param  string  $pages  e.g. "all", "1", "1-3", "1,3,5"
+     * @param  string  $mode  "lattice" (lines) or "stream" (whitespace)
+     * @param  string|null  $area  Optional area: "top,left,bottom,right" in points
      */
     public function toCsv(
         string $pdfPath,

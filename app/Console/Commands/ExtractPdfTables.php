@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Services\TabulaExtractor;
+use Illuminate\Console\Command;
 
 class ExtractPdfTables extends Command
 {

@@ -1,0 +1,63 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class StoreProductRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'category_id' => ['required', 'exists:categories,id'],
+            'price' => ['required', 'numeric', 'min:0', 'max:999999.99'],
+            'cost_price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
+            'sku' => ['required', 'string', 'max:100', 'unique:products,sku'],
+            'barcode' => ['nullable', 'string', 'max:100', 'unique:products,barcode'],
+            'track_stock' => ['boolean'],
+            'stock_quantity' => ['required_if:track_stock,true', 'nullable', 'integer', 'min:0'],
+            'min_stock_level' => ['required_if:track_stock,true', 'nullable', 'integer', 'min:0'],
+            'max_stock_level' => ['nullable', 'integer', 'min:0'],
+            'unit' => ['nullable', 'string', 'max:50'],
+            'weight' => ['nullable', 'numeric', 'min:0'],
+            'dimensions' => ['nullable', 'string', 'max:100'],
+            'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'is_active' => ['boolean'],
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     */
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Product name is required.',
+            'category_id.required' => 'Please select a category.',
+            'category_id.exists' => 'Selected category does not exist.',
+            'price.required' => 'Product price is required.',
+            'price.numeric' => 'Price must be a valid number.',
+            'price.min' => 'Price cannot be negative.',
+            'sku.required' => 'SKU is required.',
+            'sku.unique' => 'This SKU is already in use.',
+            'barcode.unique' => 'This barcode is already in use.',
+            'stock_quantity.required_if' => 'Stock quantity is required when stock tracking is enabled.',
+            'min_stock_level.required_if' => 'Minimum stock level is required when stock tracking is enabled.',
+        ];
+    }
+}

@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\Process;
 
 class PdfTextBbox
 {
@@ -20,7 +20,7 @@ class PdfTextBbox
      */
     public function getPageLines(string $pdfPath, int $page): array
     {
-        if (!file_exists($pdfPath) || !is_readable($pdfPath)) {
+        if (! file_exists($pdfPath) || ! is_readable($pdfPath)) {
             throw new \RuntimeException("PDF not readable: {$pdfPath}");
         }
 
@@ -39,7 +39,7 @@ class PdfTextBbox
         $process->setTimeout($this->timeoutSeconds);
         $process->run();
 
-        if (!$process->isSuccessful()) {
+        if (! $process->isSuccessful()) {
             @unlink($tmpHtml);
             throw new ProcessFailedException($process);
         }
@@ -56,7 +56,7 @@ class PdfTextBbox
      */
     private function parseBboxHtml(string $html): array
     {
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         // suppress warnings due to HTML quirks
         @$dom->loadHTML($html);
 
@@ -74,7 +74,7 @@ class PdfTextBbox
             if ($text === '' || empty($bbox)) {
                 // Reconstruct from child "word" nodes if needed
                 $wordNodes = $xpath->query('.//*[contains(@class,"word")]', $node);
-                $text = trim(implode(' ', array_map(fn($n) => trim($n->textContent ?? ''), iterator_to_array($wordNodes))));
+                $text = trim(implode(' ', array_map(fn ($n) => trim($n->textContent ?? ''), iterator_to_array($wordNodes))));
                 if ($text === '') {
                     continue;
                 }
@@ -83,13 +83,15 @@ class PdfTextBbox
                     $coords = [];
                     foreach ($wordNodes as $w) {
                         $b = $this->styleToBox($w->getAttribute('style'));
-                        if ($b) $coords[] = $b;
+                        if ($b) {
+                            $coords[] = $b;
+                        }
                     }
                     if ($coords) {
                         $left = min(array_column($coords, 'left'));
                         $top = min(array_column($coords, 'top'));
-                        $right = max(array_map(fn($b) => $b['left'] + $b['width'], $coords));
-                        $bottom = max(array_map(fn($b) => $b['top'] + $b['height'], $coords));
+                        $right = max(array_map(fn ($b) => $b['left'] + $b['width'], $coords));
+                        $bottom = max(array_map(fn ($b) => $b['top'] + $b['height'], $coords));
                         $bbox = [
                             'left' => $left,
                             'top' => $top,
@@ -100,7 +102,7 @@ class PdfTextBbox
                 }
             }
 
-            if (!empty($bbox)) {
+            if (! empty($bbox)) {
                 $lines[] = array_merge($bbox, ['text' => preg_replace('/\s+/u', ' ', $text)]);
             }
         }
@@ -120,6 +122,7 @@ class PdfTextBbox
             if (preg_match('/'.$prop.'\s*:\s*([0-9.]+)/i', $style, $m)) {
                 return (float) $m[1];
             }
+
             return null;
         };
 
@@ -132,6 +135,6 @@ class PdfTextBbox
             return [];
         }
 
-        return compact('left','top','width','height');
+        return compact('left', 'top', 'width', 'height');
     }
 }
