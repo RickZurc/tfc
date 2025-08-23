@@ -113,11 +113,11 @@ class ProductController extends Controller
         $validated['is_active'] = $validated['is_active'] ?? true;
         $validated['tax_rate'] = $validated['tax_rate'] ?? 0;
 
-        // If not tracking stock, set stock fields to null
+        // If not tracking stock, set stock fields to 0
         if (! $validated['track_stock']) {
-            $validated['stock_quantity'] = null;
-            $validated['min_stock_level'] = null;
-            $validated['max_stock_level'] = null;
+            $validated['stock_quantity'] = 0;
+            $validated['min_stock_level'] = 0;
+            $validated['max_stock_level'] = null; // This one can be null
         }
 
         $product = Product::create($validated);
@@ -192,11 +192,16 @@ class ProductController extends Controller
         $validated['is_active'] = $validated['is_active'] ?? true;
         $validated['tax_rate'] = $validated['tax_rate'] ?? 0;
 
-        // If not tracking stock, set stock fields to null
+        // Handle stock tracking fields
         if (! $validated['track_stock']) {
-            $validated['stock_quantity'] = null;
-            $validated['min_stock_level'] = null;
-            $validated['max_stock_level'] = null;
+            // If not tracking stock, set stock fields to 0
+            $validated['stock_quantity'] = 0;
+            $validated['min_stock_level'] = 0;
+            $validated['max_stock_level'] = null; // This one can be null
+        } else {
+            // If tracking stock, ensure required fields have defaults
+            $validated['stock_quantity'] = $validated['stock_quantity'] ?? 0;
+            $validated['min_stock_level'] = $validated['min_stock_level'] ?? 0;
         }
 
         $product->update($validated);

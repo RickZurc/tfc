@@ -37,9 +37,15 @@ class POSController extends Controller
             'payment_method' => 'required|in:cash,card,digital,mixed',
             'amount_paid' => 'required|numeric|min:0',
             'discount_amount' => 'nullable|numeric|min:0',
+            'discount_type' => 'nullable|in:percentage,numerical',
+            'discount_input' => 'nullable|numeric|min:0',
         ]);
 
+        // Generate a temporary order number for creation
+        $tempOrderNumber = 'TEMP-'.time().'-'.rand(1000, 9999);
+
         $order = Order::create([
+            'order_number' => $tempOrderNumber,
             'customer_id' => $request->customer_id,
             'user_id' => auth()->id(),
             'status' => 'pending',

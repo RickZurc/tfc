@@ -6,6 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
+import { 
   ShoppingCart, 
   Search, 
   Trash2, 
@@ -13,7 +21,9 @@ import {
   Minus,
   CreditCard,
   DollarSign,
-  Calculator
+  Calculator,
+  CheckCircle,
+  Receipt
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
@@ -70,6 +80,9 @@ export default function POSIndex() {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'digital'>('cash');
   const [amountPaid, setAmountPaid] = useState<string>('');
   const [discountAmount, setDiscountAmount] = useState<string>('0');
+  const [discountType, setDiscountType] = useState<'percentage' | 'numerical'>('numerical');
+  const [saleCompleted, setSaleCompleted] = useState<boolean>(false);
+  const [completedOrder, setCompletedOrder] = useState<any>(null);
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -113,9 +126,79 @@ export default function POSIndex() {
   };
 
   const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
-  const discount = parseFloat(discountAmount) || 0;
-  const total = subtotal - discount;
+  const discountValue = parseFloat(discountAmount) || 0;
+  
+  // Validate discount based on type
+  const validatedDiscountValue = discountType === 'percentage' 
+    ? Math.min(Math.max(0, discountValue), 100) // Clamp percentage between 0-100
+    : Math.max(0, discountValue); // Ensure numerical discount is non-negative
+    
+  const discount = discountType === 'percentage' 
+    ? (subtotal * validatedDiscountValue) / 100 
+    : validatedDiscountValue;
+  const total = Math.max(0, subtotal - discount); // Ensure total doesn't go below 0
   const change = Math.max(0, (parseFloat(amountPaid) || 0) - total);
+
+  const handlePrintReceipt = () => {
+    if (!completedOrder) return;
+    
+    // Create a printable receipt
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Receipt - ${completedOrder.order_number}</title>
+            <style>
+              body { font-family: monospace; max-width: 300px; margin: 0 auto; padding: 20px; }
+              .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
+              .row { display: flex; justify-content: space-between; margin: 5px 0; }
+              .total { font-weight: bold; border-top: 1px solid #000; padding-top: 10px; margin-top: 10px; }
+              .center { text-align: center; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h2>RECEIPT</h2>
+              <p>Order #${completedOrder.order_number}</p>
+              <p>${new Date().toLocaleString()}</p>
+            </div>
+            <div class="row">
+              <span>Subtotal:</span>
+              <span>$${formatCurrency(completedOrder.subtotal || completedOrder.originalSubtotal)}</span>
+            </div>
+            <div class="row">
+              <span>Discount:</span>
+              <span>-$${formatCurrency(completedOrder.discount_amount || completedOrder.originalDiscount)}</span>
+            </div>
+            <div class="row total">
+              <span>TOTAL:</span>
+              <span>$${formatCurrency(completedOrder.total_amount)}</span>
+            </div>
+            <div class="row">
+              <span>Amount Paid:</span>
+              <span>$${formatCurrency(completedOrder.amount_paid)}</span>
+            </div>
+            ${completedOrder.change_amount > 0 ? `
+            <div class="row">
+              <span>Change:</span>
+              <span>$${formatCurrency(completedOrder.change_amount)}</span>
+            </div>
+            ` : ''}
+            <div class="row">
+              <span>Payment:</span>
+              <span>${completedOrder.payment_method.toUpperCase()}</span>
+            </div>
+            <div class="center" style="margin-top: 20px;">
+              <p>Thank you for your business!</p>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
@@ -135,15 +218,28 @@ export default function POSIndex() {
           payment_method: paymentMethod,
           amount_paid: parseFloat(amountPaid) || 0,
           discount_amount: discount,
+          discount_type: discountType,
+          discount_input: parseFloat(discountAmount) || 0,
         }),
       });
 
       if (response.ok) {
         const result = await response.json();
+        
+        // Store cart information before clearing
+        const orderSummary = {
+          ...result.order,
+          itemCount: cart.reduce((sum, item) => sum + item.quantity, 0),
+          originalSubtotal: subtotal,
+          originalDiscount: discount
+        };
+        
+        setCompletedOrder(orderSummary);
         setCart([]);
         setAmountPaid('');
         setDiscountAmount('0');
-        alert(`Order completed successfully! Order #${result.order.order_number}`);
+        setDiscountType('numerical');
+        setSaleCompleted(true);
       } else {
         const error = await response.json();
         alert(`Error: ${error.message || 'Failed to process order'}`);
@@ -299,16 +395,49 @@ export default function POSIndex() {
                         <span>${formatCurrency(subtotal)}</span>
                       </div>
                       
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm">Discount:</label>
-                        <Input
-                          type="number"
-                          value={discountAmount}
-                          onChange={(e) => setDiscountAmount(e.target.value)}
-                          className="w-20 h-8"
-                          min="0"
-                          step="0.01"
-                        />
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-medium">Discount:</label>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant={discountType === 'numerical' ? 'default' : 'outline'}
+                              onClick={() => setDiscountType('numerical')}
+                              className="text-xs px-2 py-1 h-6"
+                            >
+                              $
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={discountType === 'percentage' ? 'default' : 'outline'}
+                              onClick={() => setDiscountType('percentage')}
+                              className="text-xs px-2 py-1 h-6"
+                            >
+                              %
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            value={discountAmount}
+                            onChange={(e) => setDiscountAmount(e.target.value)}
+                            className="w-20 h-8"
+                            min="0"
+                            max={discountType === 'percentage' ? '100' : undefined}
+                            step="0.01"
+                            placeholder={discountType === 'percentage' ? '0-100' : '0.00'}
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            {discountType === 'percentage' ? '%' : '$'}
+                          </span>
+                          {discount > 0 && (
+                            <span className="text-sm text-green-600">
+                              (-${formatCurrency(discount)})
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex justify-between font-bold text-lg border-t pt-3">
@@ -384,6 +513,85 @@ export default function POSIndex() {
           </div>
         </div>
       </div>
+
+      {/* Sale Completion Modal */}
+      <Dialog open={saleCompleted} onOpenChange={setSaleCompleted}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 animate-pulse">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <DialogTitle className="text-2xl font-bold text-green-800">
+              Sale Completed Successfully!
+            </DialogTitle>
+            <DialogDescription className="text-center text-gray-600">
+              Your transaction has been processed and saved successfully.
+            </DialogDescription>
+          </DialogHeader>
+
+          {completedOrder && (
+            <div className="space-y-4 py-4">
+              {/* Order Summary */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">Order Number:</span>
+                  <span className="text-sm font-semibold text-gray-900">{completedOrder.order_number}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">Items:</span>
+                  <span className="text-sm font-semibold text-gray-900">{completedOrder.itemCount} items</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">Subtotal:</span>
+                  <span className="text-sm font-semibold text-gray-900">${formatCurrency(completedOrder.subtotal || completedOrder.originalSubtotal)}</span>
+                </div>
+                {(completedOrder.discount_amount || completedOrder.originalDiscount) > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Discount:</span>
+                    <span className="text-sm font-semibold text-red-600">-${formatCurrency(completedOrder.discount_amount || completedOrder.originalDiscount)}</span>
+                  </div>
+                )}
+                <Separator />
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">Total Amount:</span>
+                  <span className="text-lg font-bold text-gray-900">${formatCurrency(completedOrder.total_amount)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">Amount Paid:</span>
+                  <span className="text-sm font-semibold text-gray-900">${formatCurrency(completedOrder.amount_paid)}</span>
+                </div>
+                {completedOrder.change_amount > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Change:</span>
+                    <span className="text-sm font-semibold text-green-600">${formatCurrency(completedOrder.change_amount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">Payment Method:</span>
+                  <span className="text-sm font-semibold text-gray-900 capitalize">{completedOrder.payment_method}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={handlePrintReceipt}
+              className="flex-1 sm:flex-none"
+            >
+              <Receipt className="h-4 w-4 mr-2" />
+              Print Receipt
+            </Button>
+            <Button
+              onClick={() => setSaleCompleted(false)}
+              className="flex-1 sm:flex-none"
+            >
+              New Sale
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
