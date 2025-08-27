@@ -28,6 +28,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         $totalOrders = \App\Models\Order::where('status', 'completed')->count();
 
+        // Refund statistics
+        $todayRefunds = \App\Models\Order::whereNotNull('refunded_at')
+            ->whereDate('refunded_at', today())
+            ->sum('refund_amount');
+
+        $weekRefunds = \App\Models\Order::whereNotNull('refunded_at')
+            ->where('refunded_at', '>=', now()->startOfWeek())
+            ->sum('refund_amount');
+
+        $monthRefunds = \App\Models\Order::whereNotNull('refunded_at')
+            ->whereMonth('refunded_at', now()->month)
+            ->whereYear('refunded_at', now()->year)
+            ->sum('refund_amount');
+
+        $totalRefunds = \App\Models\Order::whereNotNull('refunded_at')->count();
+        
+        // Calculate refund rate
+        $refundRate = $totalOrders > 0 ? ($totalRefunds / $totalOrders) * 100 : 0;
+
         // Sales by category (last 30 days)
         $salesByCategory = \App\Models\OrderItem::join('orders', 'order_items.order_id', '=', 'orders.id')
             ->join('products', 'order_items.product_id', '=', 'products.id')
@@ -71,6 +90,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'weekSales' => $weekSales,
                 'monthSales' => $monthSales,
                 'totalOrders' => $totalOrders,
+                'todayRefunds' => $todayRefunds,
+                'weekRefunds' => $weekRefunds,
+                'monthRefunds' => $monthRefunds,
+                'totalRefunds' => $totalRefunds,
+                'refundRate' => $refundRate,
             ],
             'salesByCategory' => $salesByCategory,
             'dailySales' => $dailySales,
@@ -101,6 +125,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Order Management Routes
     Route::resource('orders', OrderController::class)->only(['index', 'show']);
+    Route::post('orders/{order}/refund', [OrderController::class, 'refund'])->name('orders.refund');
 });
 
 require __DIR__.'/settings.php';

@@ -21,7 +21,9 @@ class Order extends Model
             'total_amount' => 'decimal:2',
             'amount_paid' => 'decimal:2',
             'change_amount' => 'decimal:2',
+            'refund_amount' => 'decimal:2',
             'completed_at' => 'datetime',
+            'refunded_at' => 'datetime',
         ];
     }
 
@@ -37,6 +39,10 @@ class Order extends Model
         'payment_method',
         'amount_paid',
         'change_amount',
+        'refund_amount',
+        'refund_reason',
+        'refunded_by',
+        'refunded_at',
         'notes',
         'completed_at',
     ];
@@ -49,6 +55,11 @@ class Order extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function refundedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'refunded_by');
     }
 
     public function items(): HasMany
@@ -89,5 +100,52 @@ class Order extends Model
             'tax_amount' => $taxAmount,
             'total_amount' => $subtotal + $taxAmount - $this->discount_amount,
         ]);
+    }
+
+    public function canBeRefunded(): bool
+    {
+        return $this->status === 'completed' && $this->refund_amount === null;
+    }
+
+    public function processRefund(float $refundAmount, string $reason, int $refundedByUserId): bool
+    {
+        if (!$this->canBeRefunded()) {
+            return false;
+        }
+
+        if ($refundAmount <= 0 || $refundAmount > $this->total_amount) {
+            return false;
+        }
+
+        // Restore product stock
+        foreach ($this->items as $item) {
+            if ($item->product->track_stock) {
+                $item->product->increment('stock_quantity', $item->quantity);
+            }
+        }
+
+        // Update order with refund information
+        $this->update([
+            'status' => 'refunded',
+            'refund_amount' => $refundAmount,
+            'refund_reason' => $reason,
+            'refunded_by' => $refundedByUserId,
+            'refunded_at' => now(),
+        ]);
+
+        // Update customer totals if customer exists
+        $this->customer?->updateTotals();
+
+        return true;
+    }
+
+    public function isFullRefund(): bool
+    {
+        return $this->refund_amount && $this->refund_amount >= $this->total_amount;
+    }
+
+    public function isPartialRefund(): bool
+    {
+        return $this->refund_amount && $this->refund_amount < $this->total_amount;
     }
 }

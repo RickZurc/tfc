@@ -15,7 +15,8 @@ import {
     Calendar,
     AlertTriangle,
     Trophy,
-    Activity
+    Activity,
+    RotateCcw
 } from 'lucide-react';
 
 // Helper function to safely format numbers
@@ -41,6 +42,11 @@ interface Statistics {
     weekSales: number;
     monthSales: number;
     totalOrders: number;
+    todayRefunds: number;
+    weekRefunds: number;
+    monthRefunds: number;
+    totalRefunds: number;
+    refundRate: number;
 }
 
 interface CategorySales {
@@ -229,6 +235,126 @@ export default function Dashboard() {
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 Completed orders
+                            </p>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Net Revenue and Refund Rate */}
+                <div className="grid auto-rows-min gap-4 md:grid-cols-2">
+                    {/* Net Revenue (This Month) */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Net Revenue (This Month)</CardTitle>
+                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-emerald-600">
+                                ${formatCurrency(statistics.monthSales - statistics.monthRefunds)}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Sales minus refunds for this month
+                            </p>
+                            <div className="flex items-center gap-2 mt-2 text-xs">
+                                <span className="text-green-600 font-medium">
+                                    ${formatCurrency(statistics.monthSales)} sales
+                                </span>
+                                <span className="text-gray-400">-</span>
+                                <span className="text-red-500 font-medium">
+                                    ${formatCurrency(statistics.monthRefunds)} refunds
+                                </span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Refund Rate */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Refund Rate</CardTitle>
+                            <RotateCcw className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-amber-600">
+                                {formatNumber(statistics.refundRate, 1)}%
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Percentage of orders refunded
+                            </p>
+                            <div className="flex items-center gap-2 mt-2 text-xs">
+                                <span className="text-red-500 font-medium">
+                                    {statistics.totalRefunds} refunded
+                                </span>
+                                <span className="text-gray-400">of</span>
+                                <span className="text-blue-600 font-medium">
+                                    {statistics.totalOrders} total orders
+                                </span>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Refund Statistics */}
+                <div className="grid auto-rows-min gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    {/* Today's Refunds */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Today's Refunds</CardTitle>
+                            <RotateCcw className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-red-600">
+                                ${formatCurrency(statistics.todayRefunds)}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Refunds processed today
+                            </p>
+                        </CardContent>
+                    </Card>
+
+                    {/* Weekly Refunds */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Week Refunds</CardTitle>
+                            <RotateCcw className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-red-500">
+                                ${formatCurrency(statistics.weekRefunds)}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Week to date refunds
+                            </p>
+                        </CardContent>
+                    </Card>
+
+                    {/* Monthly Refunds */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Month Refunds</CardTitle>
+                            <RotateCcw className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-red-400">
+                                ${formatCurrency(statistics.monthRefunds)}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Month to date refunds
+                            </p>
+                        </CardContent>
+                    </Card>
+
+                    {/* Total Refund Orders */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Refunded Orders</CardTitle>
+                            <RotateCcw className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-orange-500">
+                                {statistics.totalRefunds}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Orders with refunds
                             </p>
                         </CardContent>
                     </Card>

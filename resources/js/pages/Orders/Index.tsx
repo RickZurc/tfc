@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,7 +39,8 @@ import {
   MoreVertical,
   Download,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Undo2
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
@@ -86,11 +87,19 @@ interface Order {
   payment_method: string;
   created_at: string;
   completed_at: string | null;
+  refund_amount: number | null;
+  refund_reason: string | null;
+  refunded_at: string | null;
+  refunded_by: number | null;
   user: {
     id: number;
     name: string;
   };
   customer: {
+    id: number;
+    name: string;
+  } | null;
+  refundedBy?: {
     id: number;
     name: string;
   } | null;
@@ -149,38 +158,47 @@ export default function OrdersIndex() {
     filters.date_to ? new Date(filters.date_to) : undefined
   );
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundOrder, setRefundOrder] = useState<Order | null>(null);
+  const [refundAmount, setRefundAmount] = useState('');
+  const [refundReason, setRefundReason] = useState('');
+  const [isProcessingRefund, setIsProcessingRefund] = useState(false);
+
+  // Debounce ref for filter changes
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Sync state with URL filters when they change
   useEffect(() => {
     setSearchQuery(filters.search || '');
     setStatusFilter(filters.status || 'all');
-    setDateFrom(filters.date_from ? new Date(filters.date_from) : undefined);
-    setDateTo(filters.date_to ? new Date(filters.date_to) : undefined);
+    
+    // Handle date parsing with error handling
+    try {
+      setDateFrom(filters.date_from ? new Date(filters.date_from) : undefined);
+    } catch (error) {
+      console.error('Error parsing date_from:', filters.date_from, error);
+      setDateFrom(undefined);
+    }
+    
+    try {
+      setDateTo(filters.date_to ? new Date(filters.date_to) : undefined);
+    } catch (error) {
+      console.error('Error parsing date_to:', filters.date_to, error);
+      setDateTo(undefined);
+    }
   }, [filters]);
 
-  const handleSearch = () => {
-    const params: Record<string, any> = {};
-    
-    if (searchQuery.trim()) {
-      params.search = searchQuery.trim();
-    }
-    
-    if (statusFilter !== 'all' && statusFilter) {
-      params.status = statusFilter;
-    }
-    
-    if (dateFrom) {
-      params.date_from = dateFrom.toISOString().split('T')[0];
-    }
-    
-    if (dateTo) {
-      params.date_to = dateTo.toISOString().split('T')[0];
-    }
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
-    router.get('/orders', params, {
-      preserveState: true,
-      replace: true,
-    });
+  const handleSearch = () => {
+    handleFilterChange({ search: searchQuery }, true);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -191,89 +209,77 @@ export default function OrdersIndex() {
 
   const handleStatusChange = (value: string) => {
     setStatusFilter(value);
-    // Trigger search immediately when status changes
-    setTimeout(() => {
-      const params: Record<string, any> = {};
-      
-      if (searchQuery.trim()) {
-        params.search = searchQuery.trim();
-      }
-      
-      if (value !== 'all' && value) {
-        params.status = value;
-      }
-      
-      if (dateFrom) {
-        params.date_from = dateFrom.toISOString().split('T')[0];
-      }
-      
-      if (dateTo) {
-        params.date_to = dateTo.toISOString().split('T')[0];
-      }
-
-      router.get('/orders', params, {
-        preserveState: true,
-        replace: true,
-      });
-    }, 0);
+    // Use a debounced approach instead of setTimeout
+    handleFilterChange({ status: value });
   };
 
   const handleDateFromChange = (date: Date | undefined) => {
     setDateFrom(date);
-    // Trigger search immediately when date changes
-    setTimeout(() => {
-      const params: Record<string, any> = {};
-      
-      if (searchQuery.trim()) {
-        params.search = searchQuery.trim();
-      }
-      
-      if (statusFilter !== 'all' && statusFilter) {
-        params.status = statusFilter;
-      }
-      
-      if (date) {
-        params.date_from = date.toISOString().split('T')[0];
-      }
-      
-      if (dateTo) {
-        params.date_to = dateTo.toISOString().split('T')[0];
-      }
-
-      router.get('/orders', params, {
-        preserveState: true,
-        replace: true,
-      });
-    }, 0);
+    handleFilterChange({ date_from: date });
   };
 
   const handleDateToChange = (date: Date | undefined) => {
     setDateTo(date);
-    // Trigger search immediately when date changes
-    setTimeout(() => {
+    handleFilterChange({ date_to: date });
+  };
+
+  const handleFilterChange = (updates: Partial<{
+    search?: string;
+    status?: string;
+    date_from?: Date | undefined;
+    date_to?: Date | undefined;
+  }>, immediate = false) => {
+    // Clear existing debounce timer
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    const executeFilter = () => {
       const params: Record<string, any> = {};
       
-      if (searchQuery.trim()) {
-        params.search = searchQuery.trim();
+      // Use current state values, but override with any updates
+      const currentSearch = updates.search !== undefined ? updates.search : searchQuery;
+      const currentStatus = updates.status !== undefined ? updates.status : statusFilter;
+      const currentDateFrom = updates.date_from !== undefined ? updates.date_from : dateFrom;
+      const currentDateTo = updates.date_to !== undefined ? updates.date_to : dateTo;
+      
+      if (currentSearch && currentSearch.trim()) {
+        params.search = currentSearch.trim();
       }
       
-      if (statusFilter !== 'all' && statusFilter) {
-        params.status = statusFilter;
+      if (currentStatus && currentStatus !== 'all') {
+        params.status = currentStatus;
       }
       
-      if (dateFrom) {
-        params.date_from = dateFrom.toISOString().split('T')[0];
+      if (currentDateFrom) {
+        try {
+          params.date_from = currentDateFrom.toISOString().split('T')[0];
+        } catch (error) {
+          console.error('Invalid date_from:', currentDateFrom);
+        }
       }
       
-      if (date) {
-        params.date_to = date.toISOString().split('T')[0];
+      if (currentDateTo) {
+        try {
+          params.date_to = currentDateTo.toISOString().split('T')[0];
+        } catch (error) {
+          console.error('Invalid date_to:', currentDateTo);
+        }
       }
 
       router.get('/orders', params, {
         preserveState: true,
         replace: true,
       });
-    }, 0);
+    };
+
+    // For immediate execution (status/date changes) or search with debounce
+    if (immediate || updates.status !== undefined || updates.date_from !== undefined || updates.date_to !== undefined) {
+      executeFilter();
+    } else {
+      // Debounce search queries
+      debounceRef.current = setTimeout(executeFilter, 300);
+    }
   };
 
   const handleReset = () => {
@@ -352,6 +358,51 @@ export default function OrdersIndex() {
       printWindow.document.close();
       printWindow.print();
     }
+  };
+
+  const handleRefundClick = (order: Order) => {
+    setRefundOrder(order);
+    setRefundAmount(formatCurrency(order.total_amount));
+    setRefundReason('');
+    setShowRefundModal(true);
+  };
+
+  const handleRefundSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!refundOrder) return;
+
+    setIsProcessingRefund(true);
+
+    try {
+      const response = await fetch(`/orders/${refundOrder.id}/refund`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        },
+        body: JSON.stringify({
+          refund_amount: parseFloat(refundAmount),
+          refund_reason: refundReason,
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh the page to show updated order status
+        router.reload();
+        setShowRefundModal(false);
+      } else {
+        const errorData = await response.json();
+        console.error('Refund failed:', errorData);
+      }
+    } catch (error) {
+      console.error('Refund error:', error);
+    } finally {
+      setIsProcessingRefund(false);
+    }
+  };
+
+  const canRefund = (order: Order) => {
+    return order.status === 'completed' && !order.refund_amount;
   };
 
   return (
@@ -531,6 +582,12 @@ export default function OrdersIndex() {
                               <span className="text-muted-foreground">Payment:</span>
                               <span className="ml-2 font-medium capitalize">{order.payment_method}</span>
                             </div>
+                            {order.refund_amount && (
+                              <div>
+                                <span className="text-muted-foreground">Refunded:</span>
+                                <span className="ml-2 font-medium text-red-600">${formatCurrency(order.refund_amount)}</span>
+                              </div>
+                            )}
                             {order.customer && (
                               <div>
                                 <span className="text-muted-foreground">Customer:</span>
@@ -620,6 +677,25 @@ export default function OrdersIndex() {
                                         <span>Total:</span>
                                         <span>${formatCurrency(selectedOrder.total_amount)}</span>
                                       </div>
+                                      {selectedOrder.refund_amount && (
+                                        <>
+                                          <Separator />
+                                          <div className="flex justify-between text-red-600">
+                                            <span>Refund Amount:</span>
+                                            <span>-${formatCurrency(selectedOrder.refund_amount)}</span>
+                                          </div>
+                                          {selectedOrder.refund_reason && (
+                                            <div className="text-sm text-muted-foreground">
+                                              <span className="font-medium">Refund Reason:</span> {selectedOrder.refund_reason}
+                                            </div>
+                                          )}
+                                          {selectedOrder.refunded_at && (
+                                            <div className="text-sm text-muted-foreground">
+                                              <span className="font-medium">Refunded:</span> {formatDate(selectedOrder.refunded_at)}
+                                            </div>
+                                          )}
+                                        </>
+                                      )}
                                     </div>
                                   </div>
 
@@ -629,6 +705,12 @@ export default function OrdersIndex() {
                                       <Receipt className="h-4 w-4 mr-2" />
                                       Print Receipt
                                     </Button>
+                                    {canRefund(selectedOrder) && (
+                                      <Button onClick={() => handleRefundClick(selectedOrder)} variant="outline">
+                                        <Undo2 className="h-4 w-4 mr-2" />
+                                        Process Refund
+                                      </Button>
+                                    )}
                                     <Link href={`/orders/${selectedOrder.id}`}>
                                       <Button variant="outline">
                                         <Eye className="h-4 w-4 mr-2" />
@@ -659,6 +741,12 @@ export default function OrdersIndex() {
                                 <Receipt className="h-4 w-4 mr-2" />
                                 Print Receipt
                               </DropdownMenuItem>
+                              {canRefund(order) && (
+                                <DropdownMenuItem onClick={() => handleRefundClick(order)}>
+                                  <Undo2 className="h-4 w-4 mr-2" />
+                                  Process Refund
+                                </DropdownMenuItem>
+                              )}
                               <Link href={`/orders/${order.id}`}>
                                 <DropdownMenuItem>
                                   <Eye className="h-4 w-4 mr-2" />
@@ -695,6 +783,86 @@ export default function OrdersIndex() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Refund Modal */}
+      <Dialog open={showRefundModal} onOpenChange={setShowRefundModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Process Refund</DialogTitle>
+            <DialogDescription>
+              {refundOrder && `Process refund for order ${refundOrder.order_number}`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {refundOrder && (
+            <form onSubmit={handleRefundSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium">Order Total:</span>
+                  <p>${formatCurrency(refundOrder.total_amount)}</p>
+                </div>
+                <div>
+                  <span className="font-medium">Payment Method:</span>
+                  <p className="capitalize">{refundOrder.payment_method}</p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Refund Amount</label>
+                <Input
+                  type="number"
+                  value={refundAmount}
+                  onChange={(e) => setRefundAmount(e.target.value)}
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0.01"
+                  max={refundOrder.total_amount}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Maximum refund: ${formatCurrency(refundOrder.total_amount)}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Refund Reason</label>
+                <textarea
+                  value={refundReason}
+                  onChange={(e) => setRefundReason(e.target.value)}
+                  placeholder="Enter reason for refund..."
+                  className="w-full min-h-[80px] px-3 py-2 border border-input rounded-md text-sm"
+                  maxLength={500}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  {refundReason.length}/500 characters
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowRefundModal(false)}
+                  disabled={isProcessingRefund}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isProcessingRefund || !refundAmount || !refundReason}
+                  className="flex-1"
+                >
+                  {isProcessingRefund ? 'Processing...' : 'Process Refund'}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
