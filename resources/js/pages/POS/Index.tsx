@@ -1,36 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Head, usePage } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
-} from '@/components/ui/dialog';
-import { 
-  ShoppingCart, 
-  Search, 
-  Trash2, 
-  Plus, 
-  Minus,
-  CreditCard,
-  DollarSign,
-  Calculator,
-  CheckCircle,
-  Receipt,
-  Save,
-  RotateCcw,
-  AlertTriangle
-} from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { usePersistedCart } from '@/hooks/usePersistedCart';
+
+// POS Components
+import ProductSearch from '@/components/pos/ProductSearch';
+import CategoryFilter from '@/components/pos/CategoryFilter';
+import ProductGrid from '@/components/pos/ProductGrid';
+import CartStatusBar from '@/components/pos/CartStatusBar';
+import CartDisplay from '@/components/pos/CartDisplay';
+import CartRestoreDialog from '@/components/pos/CartRestoreDialog';
+import SaleCompletionModal from '@/components/pos/SaleCompletionModal';
 
 // Helper function to safely format currency
 const formatCurrency = (value: any): string => {
@@ -69,6 +50,8 @@ interface PageProps extends Record<string, unknown> {
   categories: Category[];
   products: Product[];
 }
+
+type PaymentMethod = 'cash' | 'card' | 'digital';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -417,482 +400,78 @@ export default function POSIndex() {
 
       <div className="p-6">
         {/* Cart Status Bar */}
-        {cart.length > 0 && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Save className="h-4 w-4 text-blue-600" />
-              <span className="text-sm text-blue-800">
-                Cart automatically saved ({cart.length} items)
-              </span>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleSaveToServer}
-              className="text-blue-600 border-blue-600 hover:bg-blue-50"
-            >
-              <Save className="h-3 w-3 mr-1" />
-              Backup to Server
-            </Button>
-          </div>
-        )}
+        <CartStatusBar 
+          cartItemCount={cart.length}
+          onSaveToServer={handleSaveToServer}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Product Selection */}
           <div className="lg:col-span-2 space-y-4">
             {/* Search Bar */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search products by name or SKU..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            <ProductSearch 
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+            />
 
             {/* Category Filter */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant={selectedCategory === null ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedCategory(null)}
-                  >
-                    All Categories
-                  </Button>
-                  {categories.map(category => (
-                    <Button
-                      key={category.id}
-                      variant={selectedCategory === category.id ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedCategory(category.id)}
-                      style={{ backgroundColor: selectedCategory === category.id ? category.color : undefined }}
-                    >
-                      {category.name}
-                    </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <CategoryFilter 
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onCategoryChange={setSelectedCategory}
+            />
 
             {/* Products Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredProducts.map(product => (
-                <Card key={product.id} className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                  <CardContent className="p-4" onClick={() => addToCart(product)}>
-                    <div className="space-y-3">
-                      <div>
-                        <h3 className="font-semibold text-sm truncate">{product.name}</h3>
-                        <p className="text-xs text-muted-foreground">SKU: {product.sku}</p>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold text-primary">
-                          ${formatCurrency(product.price)}
-                        </span>
-                        <Badge 
-                          variant={product.stock_quantity > 10 ? "default" : "destructive"}
-                          className="text-xs"
-                        >
-                          {product.stock_quantity} left
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-2 h-2 rounded-full" 
-                          style={{ backgroundColor: product.category.color }}
-                        />
-                        <span className="text-xs text-muted-foreground">{product.category.name}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <ProductGrid 
+              products={filteredProducts}
+              onAddToCart={addToCart}
+            />
           </div>
 
           {/* Cart & Checkout */}
           <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5" />
-                  Cart ({cart.length} items)
-                  {cart.length > 0 && (
-                    <Badge variant="secondary" className="ml-auto">
-                      Auto-saved
-                    </Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {cart.length === 0 ? (
-                  <div className="text-center py-8">
-                    <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-muted-foreground">Cart is empty</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-3 max-h-64 overflow-y-auto">
-                      {cart.map(item => (
-                        <div key={item.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{item.name}</p>
-                            <p className="text-xs text-muted-foreground">${formatCurrency(item.price)} each</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <span className="text-sm w-8 text-center">{item.quantity}</span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => removeFromCart(item.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <Separator />
-
-                    {/* Payment Details */}
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span>Subtotal:</span>
-                        <span>${formatCurrency(subtotal)}</span>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <label className="text-sm font-medium">Discount:</label>
-                          <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              variant={discountType === 'numerical' ? 'default' : 'outline'}
-                              onClick={() => setDiscountType('numerical')}
-                              className="text-xs px-2 py-1 h-6"
-                            >
-                              $
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={discountType === 'percentage' ? 'default' : 'outline'}
-                              onClick={() => setDiscountType('percentage')}
-                              className="text-xs px-2 py-1 h-6"
-                            >
-                              %
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            value={discountAmount}
-                            onChange={(e) => setDiscountAmount(e.target.value)}
-                            className="w-20 h-8"
-                            min="0"
-                            max={discountType === 'percentage' ? '100' : undefined}
-                            step="0.01"
-                            placeholder={discountType === 'percentage' ? '0-100' : '0.00'}
-                          />
-                          <span className="text-sm text-muted-foreground">
-                            {discountType === 'percentage' ? '%' : '$'}
-                          </span>
-                          {discount > 0 && (
-                            <span className="text-sm text-green-600">
-                              (-${formatCurrency(discount)})
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between font-bold text-lg border-t pt-3">
-                        <span>Total:</span>
-                        <span className="text-primary">${formatCurrency(total)}</span>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Payment Method */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Payment Method:</label>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant={paymentMethod === 'cash' ? 'default' : 'outline'}
-                          onClick={() => setPaymentMethod('cash')}
-                        >
-                          <DollarSign className="h-4 w-4 mr-1" />
-                          Cash
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={paymentMethod === 'card' ? 'default' : 'outline'}
-                          onClick={() => setPaymentMethod('card')}
-                        >
-                          <CreditCard className="h-4 w-4 mr-1" />
-                          Card
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={paymentMethod === 'digital' ? 'default' : 'outline'}
-                          onClick={() => setPaymentMethod('digital')}
-                        >
-                          <Calculator className="h-4 w-4 mr-1" />
-                          Digital
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Amount Paid */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Amount Paid:</label>
-                      <Input
-                        type="number"
-                        value={amountPaid}
-                        onChange={(e) => setAmountPaid(e.target.value)}
-                        placeholder="0.00"
-                        min="0"
-                        step="0.01"
-                        className={`${
-                          paymentError || validationErrors.amount_paid ? 'border-red-500' : ''
-                        } ${
-                          !isPaymentSufficient && amountPaidNum > 0 ? 'border-yellow-500' : ''
-                        } ${
-                          isPaymentSufficient && amountPaidNum > 0 ? 'border-green-500' : ''
-                        }`}
-                      />
-                      
-                      {/* Payment Error Display */}
-                      {paymentError && (
-                        <div className="bg-red-50 border border-red-200 rounded-md p-2">
-                          <p className="text-sm text-red-800">{paymentError}</p>
-                        </div>
-                      )}
-                      
-                      {/* Validation Errors */}
-                      {validationErrors.amount_paid && (
-                        <div className="bg-red-50 border border-red-200 rounded-md p-2">
-                          {validationErrors.amount_paid.map((error, index) => (
-                            <p key={index} className="text-sm text-red-800">{error}</p>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {/* Change Display */}
-                      {change > 0 && (
-                        <div className="bg-green-50 border border-green-200 rounded-md p-2">
-                          <p className="text-sm font-medium text-green-800">
-                            Change: ${formatCurrency(change)}
-                          </p>
-                        </div>
-                      )}
-                      
-                      {/* Insufficient Payment Warning */}
-                      {!isPaymentSufficient && amountPaidNum > 0 && !paymentError && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-2">
-                          <p className="text-sm font-medium text-yellow-800">
-                            Need ${formatCurrency(total - amountPaidNum)} more
-                          </p>
-                        </div>
-                      )}
-                      
-                      {/* Payment Status Indicator */}
-                      {amountPaidNum > 0 && (
-                        <div className="flex items-center gap-2 text-sm">
-                          {isPaymentSufficient ? (
-                            <>
-                              <CheckCircle className="h-4 w-4 text-green-600" />
-                              <span className="text-green-600 font-medium">Payment sufficient</span>
-                            </>
-                          ) : (
-                            <>
-                              <div className="h-4 w-4 rounded-full bg-yellow-500" />
-                              <span className="text-yellow-600 font-medium">Insufficient payment</span>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    <Button
-                      onClick={handleCheckout}
-                      className={`w-full ${
-                        !isPaymentSufficient && amountPaidNum > 0 
-                          ? 'bg-yellow-600 hover:bg-yellow-700' 
-                          : ''
-                      }`}
-                      disabled={cart.length === 0 || !amountPaid || !isPaymentSufficient}
-                    >
-                      {cart.length === 0 
-                        ? 'Cart is Empty'
-                        : !amountPaid 
-                        ? 'Enter Payment Amount'
-                        : !isPaymentSufficient 
-                        ? `Need $${formatCurrency(total - amountPaidNum)} More`
-                        : 'Complete Sale'
-                      }
-                    </Button>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+            <CartDisplay 
+              cart={cart}
+              subtotal={subtotal}
+              discountAmount={discountAmount}
+              discountType={discountType}
+              discount={discount}
+              total={total}
+              paymentMethod={paymentMethod}
+              amountPaid={amountPaid}
+              change={change}
+              isPaymentSufficient={isPaymentSufficient}
+              amountPaidNum={amountPaidNum}
+              paymentError={paymentError}
+              validationErrors={validationErrors}
+              onUpdateQuantity={updateQuantity}
+              onRemoveFromCart={removeFromCart}
+              onDiscountAmountChange={setDiscountAmount}
+              onDiscountTypeChange={setDiscountType}
+              onPaymentMethodChange={setPaymentMethod}
+              onAmountPaidChange={setAmountPaid}
+              onCheckout={handleCheckout}
+            />
           </div>
         </div>
       </div>
 
       {/* Cart Restore Dialog */}
-      <Dialog open={showCartRestoreDialog} onOpenChange={setShowCartRestoreDialog}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-              <RotateCcw className="h-8 w-8 text-blue-600" />
-            </div>
-            <DialogTitle className="text-center">
-              Restore Previous Cart?
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              We found a previously saved cart with {cartBackupInfo?.item_count} items.
-              Would you like to restore it?
-            </DialogDescription>
-          </DialogHeader>
-
-          {cartBackupInfo && (
-            <div className="py-4 space-y-2">
-              <div className="bg-gray-50 rounded-lg p-3 space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span className="font-medium">Items:</span>
-                  <span>{cartBackupInfo.item_count}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="font-medium">Saved:</span>
-                  <span>{new Date(cartBackupInfo.saved_at).toLocaleString()}</span>
-                </div>
-                {cartBackupInfo.discount_amount && cartBackupInfo.discount_amount !== '0' && (
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">Discount:</span>
-                    <span>${cartBackupInfo.discount_amount}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={startFresh}
-            >
-              Start Fresh
-            </Button>
-            <Button onClick={restoreFromServerBackup}>
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Restore Cart
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CartRestoreDialog 
+        isOpen={showCartRestoreDialog}
+        cartBackupInfo={cartBackupInfo}
+        onClose={() => setShowCartRestoreDialog(false)}
+        onStartFresh={startFresh}
+        onRestore={restoreFromServerBackup}
+      />
 
       {/* Sale Completion Modal */}
-      <Dialog open={saleCompleted} onOpenChange={setSaleCompleted}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 animate-pulse">
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-            <DialogTitle className="text-2xl font-bold text-green-800">
-              Sale Completed Successfully!
-            </DialogTitle>
-            <DialogDescription className="text-center text-gray-600">
-              Your transaction has been processed and saved successfully.
-            </DialogDescription>
-          </DialogHeader>
-
-          {completedOrder && (
-            <div className="space-y-4 py-4">
-              {/* Order Summary */}
-              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-600">Order Number:</span>
-                  <span className="text-sm font-semibold text-gray-900">{completedOrder.order_number}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-600">Items:</span>
-                  <span className="text-sm font-semibold text-gray-900">{completedOrder.itemCount} items</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-600">Subtotal:</span>
-                  <span className="text-sm font-semibold text-gray-900">${formatCurrency(completedOrder.subtotal || completedOrder.originalSubtotal)}</span>
-                </div>
-                {(completedOrder.discount_amount || completedOrder.originalDiscount) > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-600">Discount:</span>
-                    <span className="text-sm font-semibold text-red-600">-${formatCurrency(completedOrder.discount_amount || completedOrder.originalDiscount)}</span>
-                  </div>
-                )}
-                <Separator />
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-600">Total Amount:</span>
-                  <span className="text-lg font-bold text-gray-900">${formatCurrency(completedOrder.total_amount)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-600">Amount Paid:</span>
-                  <span className="text-sm font-semibold text-gray-900">${formatCurrency(completedOrder.amount_paid)}</span>
-                </div>
-                {(completedOrder.change_amount || 0) > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-600">Change:</span>
-                    <span className="text-sm font-semibold text-green-600">${formatCurrency(completedOrder.change_amount)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-600">Payment Method:</span>
-                  <span className="text-sm font-semibold text-gray-900 capitalize">{completedOrder.payment_method}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={handlePrintReceipt}
-              className="flex-1 sm:flex-none"
-            >
-              <Receipt className="h-4 w-4 mr-2" />
-              Print Receipt
-            </Button>
-            <Button
-              onClick={() => setSaleCompleted(false)}
-              className="flex-1 sm:flex-none"
-            >
-              New Sale
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <SaleCompletionModal 
+        isOpen={saleCompleted}
+        completedOrder={completedOrder}
+        onClose={() => setSaleCompleted(false)}
+        onPrintReceipt={handlePrintReceipt}
+      />
     </AppLayout>
   );
 }
