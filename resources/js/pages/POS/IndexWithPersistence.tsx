@@ -77,7 +77,7 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
 ];
 
-export default function POSIndex() {
+export default function POSIndexWithPersistence() {
   const { categories, products } = usePage<PageProps>().props;
   
   // Use the persisted cart hook
@@ -152,23 +152,6 @@ export default function POSIndex() {
     }
   };
 
-  const startFresh = () => {
-    // Clear the cart completely
-    clearCart();
-    
-    // Reset all form fields
-    setDiscountAmount('0');
-    setDiscountType('numerical');
-    setPaymentMethod('cash');
-    setCustomerId(undefined);
-    setAmountPaid('');
-    
-    // Close the restore dialog
-    setShowCartRestoreDialog(false);
-    
-    console.log('Cart cleared - starting fresh');
-  };
-
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          product.sku.toLowerCase().includes(searchQuery.toLowerCase());
@@ -229,7 +212,7 @@ export default function POSIndex() {
   const isPaymentSufficient = amountPaidNum >= total;
 
   // Clear payment error when amount paid changes and becomes sufficient
-  React.useEffect(() => {
+  useEffect(() => {
     if (isPaymentSufficient && paymentError) {
       setPaymentError('');
     }
@@ -350,13 +333,7 @@ export default function POSIndex() {
         
         // Clear cart completely (including localStorage)
         clearCart();
-        
-        // Reset all form fields
         setAmountPaid('');
-        setDiscountAmount('0');
-        setDiscountType('numerical');
-        setPaymentMethod('cash');
-        setCustomerId(undefined);
         setPaymentError('');
         setValidationErrors({});
         setSaleCompleted(true);
@@ -364,7 +341,6 @@ export default function POSIndex() {
         // Clear server backup as well
         try {
           await fetch('/api/pos/clear-cart', { method: 'DELETE' });
-          console.log('Cart and server backup cleared after successful sale');
         } catch (error) {
           console.error('Failed to clear server backup:', error);
         }
@@ -803,7 +779,7 @@ export default function POSIndex() {
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
-              onClick={startFresh}
+              onClick={() => setShowCartRestoreDialog(false)}
             >
               Start Fresh
             </Button>

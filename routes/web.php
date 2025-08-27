@@ -86,6 +86,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/products/search', [POSController::class, 'searchProducts'])->name('products.search');
     });
 
+    // POS Cart Backup API Routes
+    Route::prefix('api/pos')->name('api.pos.')->group(function () {
+        Route::post('/save-cart', [\App\Http\Controllers\Api\CartBackupController::class, 'saveCart'])->name('save-cart');
+        Route::get('/restore-cart', [\App\Http\Controllers\Api\CartBackupController::class, 'restoreCart'])->name('restore-cart');
+        Route::delete('/clear-cart', [\App\Http\Controllers\Api\CartBackupController::class, 'clearCart'])->name('clear-cart');
+        Route::get('/cart-info', [\App\Http\Controllers\Api\CartBackupController::class, 'getCartInfo'])->name('cart-info');
+    });
+
     // Product Management Routes
     Route::resource('products', ProductController::class);
     Route::patch('/products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePOSOrderRequest;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -27,19 +28,10 @@ class POSController extends Controller
         ]);
     }
 
-    public function createOrder(Request $request)
+    public function createOrder(StorePOSOrderRequest $request)
     {
-        $request->validate([
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'customer_id' => 'nullable|exists:customers,id',
-            'payment_method' => 'required|in:cash,card,digital,mixed',
-            'amount_paid' => 'required|numeric|min:0',
-            'discount_amount' => 'nullable|numeric|min:0',
-            'discount_type' => 'nullable|in:percentage,numerical',
-            'discount_input' => 'nullable|numeric|min:0',
-        ]);
+        // The validation is already handled by the Form Request
+        // including the payment amount validation
 
         // Generate a temporary order number for creation
         $tempOrderNumber = 'TEMP-'.time().'-'.rand(1000, 9999);
@@ -75,8 +67,9 @@ class POSController extends Controller
         }
 
         $order->calculateTotals();
+        $changeAmount = $request->getChangeAmount();
         $order->update([
-            'change_amount' => max(0, $order->amount_paid - $order->total_amount),
+            'change_amount' => $changeAmount,
         ]);
 
         // Generate order number after creation
@@ -90,6 +83,9 @@ class POSController extends Controller
             'success' => true,
             'order' => $order->load('items.product', 'customer'),
             'message' => 'Order created successfully',
+            'change_amount' => $changeAmount,
+            'total_amount' => $order->total_amount,
+            'amount_paid' => $order->amount_paid,
         ]);
     }
 
