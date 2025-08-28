@@ -86,7 +86,7 @@ class ProductController extends Controller
     {
         $categories = Category::where('is_active', true)
             ->orderBy('name')
-            ->get(['id', 'name', 'color']);
+            ->get(['id', 'name', 'color', 'icon']);
 
         return Inertia::render('Products/Create', [
             'categories' => $categories,

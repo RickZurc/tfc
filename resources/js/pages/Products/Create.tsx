@@ -9,11 +9,13 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Barcode, DollarSign, Package, Save, Settings } from 'lucide-react';
 import { useState } from 'react';
+import { DynamicIcon } from '@/components/ui/dynamic-icon';
 
 interface Category {
     id: number;
     name: string;
     color: string;
+    icon?: string;
 }
 
 interface Props {
@@ -112,6 +114,8 @@ export default function ProductCreate({ categories }: Props) {
         });
     };
 
+    console.log('Categories:', categories); // Debugging line
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Create Product" />
@@ -168,6 +172,7 @@ export default function ProductCreate({ categories }: Props) {
                                                     <SelectItem key={category.id} value={category.id.toString()}>
                                                         <div className="flex items-center gap-2">
                                                             <div className="h-3 w-3 rounded-full" style={{ backgroundColor: category.color }} />
+                                                            <DynamicIcon name={category.icon} className="h-4 w-4" />
                                                             {category.name}
                                                         </div>
                                                     </SelectItem>
