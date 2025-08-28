@@ -504,12 +504,14 @@ export default function OrdersIndex() {
                 date={dateFrom}
                 onDateChange={handleDateFromChange}
                 placeholder="From date"
+                disableFutureDates={true}
               />
 
               <DatePicker
                 date={dateTo}
                 onDateChange={handleDateToChange}
                 placeholder="To date"
+                disableFutureDates={true}
               />
 
               <div className="flex gap-2">

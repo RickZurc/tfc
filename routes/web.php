@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\POSController;
 use App\Http\Controllers\ProductController;
@@ -122,6 +123,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('products', ProductController::class);
     Route::patch('/products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
     Route::post('/products/bulk-action', [ProductController::class, 'bulkAction'])->name('products.bulk-action');
+
+    // Category Management Routes
+    Route::resource('categories', CategoryController::class);
+    Route::patch('/categories/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('categories.toggle-status');
 
     // Order Management Routes
     Route::resource('orders', OrderController::class)->only(['index', 'show']);
