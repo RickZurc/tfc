@@ -27,10 +27,13 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('password'),
         ]);
 
-        // Seed POS data
+        // Seed POS data in correct order (dependencies matter)
         $this->call([
             CategorySeeder::class,
             ProductSeeder::class,
+            CustomerSeeder::class,
+            OrderSeeder::class,
+            OrderItemSeeder::class,
         ]);
     }
 }
