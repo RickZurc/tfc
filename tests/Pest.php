@@ -16,7 +16,7 @@ use Tests\TestCase;
 |
 */
 
-pest()->extends(TestCase::class)->in('Feature', 'Unit');
+pest()->extends(TestCase::class)->in('Feature', 'Unit', 'Browser');
 
 /*
 |--------------------------------------------------------------------------
