@@ -4,6 +4,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import React, { useEffect, useState } from 'react';
 
+
 // POS Components
 import CartDisplay from '@/components/pos/CartDisplay';
 import CartRestoreDialog from '@/components/pos/CartRestoreDialog';

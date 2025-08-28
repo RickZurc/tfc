@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { CategoryFilterProps } from '@/types/pos';
+import { DynamicIcon } from '@/components/ui/dynamic-icon';
+
 
 export default function CategoryFilter({ categories, selectedCategory, onCategoryChange }: CategoryFilterProps) {
     return (
@@ -18,6 +20,7 @@ export default function CategoryFilter({ categories, selectedCategory, onCategor
                             onClick={() => onCategoryChange(category.id)}
                             style={{ backgroundColor: selectedCategory === category.id ? category.color : undefined }}
                         >
+                            <DynamicIcon name={category.icon} size={16} />
                             {category.name}
                         </Button>
                     ))}
