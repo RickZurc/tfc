@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { DynamicIcon } from '@/components/ui/dynamic-icon'
 import { type BreadcrumbItem } from '@/types'
 import { 
     Plus, 
@@ -227,10 +228,22 @@ export default function CategoriesIndex() {
                                 <CardContent className="p-6">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex items-center gap-3">
-                                            <div 
-                                                className="w-4 h-4 rounded-full border"
-                                                style={{ backgroundColor: category.color }}
-                                            />
+                                            <div className="flex items-center gap-2">
+                                                <div 
+                                                    className="w-4 h-4 rounded-full border"
+                                                    style={{ backgroundColor: category.color }}
+                                                />
+                                                <div 
+                                                    className="p-2 rounded-md"
+                                                    style={{ backgroundColor: `${category.color}20` }}
+                                                >
+                                                    <DynamicIcon 
+                                                        name={category.icon}
+                                                        className="h-4 w-4" 
+                                                        style={{ color: category.color }}
+                                                    />
+                                                </div>
+                                            </div>
                                             <div>
                                                 <h3 className="font-semibold text-lg">{category.name}</h3>
                                                 <Badge variant={getStatusVariant(category.is_active)} className="mt-1">

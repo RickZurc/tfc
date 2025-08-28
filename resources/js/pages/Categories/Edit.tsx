@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
+import { IconSelector } from '@/components/ui/icon-selector'
 import { type BreadcrumbItem } from '@/types'
 import { ArrowLeft, Save } from 'lucide-react'
 
@@ -201,15 +202,14 @@ export default function EditCategory() {
                                 {/* Icon */}
                                 <div className="space-y-2">
                                     <Label htmlFor="icon">Icon</Label>
-                                    <Input
-                                        id="icon"
+                                    <IconSelector
                                         value={formData.icon}
-                                        onChange={(e) => handleInputChange('icon', e.target.value)}
-                                        placeholder="Enter icon name (optional)"
+                                        onValueChange={(value) => handleInputChange('icon', value)}
+                                        placeholder="Choose an icon..."
                                         className={errors.icon ? 'border-destructive' : ''}
                                     />
                                     <p className="text-sm text-muted-foreground">
-                                        Icon name for UI display (e.g., "shopping-cart", "tag")
+                                        Select an icon to represent this category
                                     </p>
                                     {errors.icon && (
                                         <p className="text-sm text-destructive">{errors.icon}</p>
