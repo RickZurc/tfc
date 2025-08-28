@@ -2,6 +2,9 @@
 
 use App\Models\Order;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 describe('Sales Management', function () {
     beforeEach(function () {
@@ -92,8 +95,8 @@ describe('Sales Management', function () {
             ->has('stats')
             ->where('stats.total_orders', 3)
             ->where('stats.today_orders', 3)
-            ->where('stats.total_sales', 300.00)
-            ->where('stats.today_sales', 300.00)
+            ->where('stats.total_sales', '300.00')
+            ->where('stats.today_sales', '300.00')
         );
     });
 });

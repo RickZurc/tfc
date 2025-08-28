@@ -3,8 +3,7 @@
 use App\Models\Category;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-
-use function Pest\Laravel\actingAs;
+use Illuminate\Support\Facades\Auth;
 
 uses(RefreshDatabase::class);
 
@@ -39,7 +38,7 @@ beforeEach(function () {
 
 describe('Categories Index Page', function () {
     it('displays all categories with icons and details', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/categories');
 
@@ -52,24 +51,24 @@ describe('Categories Index Page', function () {
     });
 
     it('shows category icons dynamically', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/categories');
 
         // Check that dynamic icons are rendered (should see icon containers)
-        $page->assertElementExists('[data-icon="Smartphone"]')
-            ->assertElementExists('[data-icon="Coffee"]')
-            ->assertElementExists('[data-icon="Archive"]')
+        $page->assertPresent('[data-icon="Smartphone"]')
+            ->assertPresent('[data-icon="Coffee"]')
+            ->assertPresent('[data-icon="Archive"]')
             ->assertNoJavascriptErrors();
     });
 
     it('can filter categories by status', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/categories');
 
         // Filter by active only
-        $page->selectValue('[data-testid="status-filter"]', 'active')
+        $page->select('[data-testid="status-filter"]', 'active')
             ->waitForText('Electronics')
             ->assertSee('Electronics')
             ->assertSee('Food & Beverages')
@@ -77,7 +76,7 @@ describe('Categories Index Page', function () {
             ->assertNoJavascriptErrors();
 
         // Filter by inactive only
-        $page->selectValue('[data-testid="status-filter"]', 'inactive')
+        $page->select('[data-testid="status-filter"]', 'inactive')
             ->waitForText('Inactive Category')
             ->assertSee('Inactive Category')
             ->assertDontSee('Electronics')
@@ -86,7 +85,7 @@ describe('Categories Index Page', function () {
     });
 
     it('can search categories by name', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/categories');
 
@@ -99,7 +98,7 @@ describe('Categories Index Page', function () {
     });
 
     it('can toggle category status', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/categories');
 
@@ -113,7 +112,7 @@ describe('Categories Index Page', function () {
     });
 
     it('has working action buttons', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/categories');
 
@@ -135,7 +134,7 @@ describe('Categories Index Page', function () {
 
 describe('Category Creation', function () {
     it('can create a new category with icon selector', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/categories/create');
 
@@ -155,7 +154,7 @@ describe('Category Creation', function () {
 
         // Submit form
         $page->click('Create Category')
-            ->waitForPath('/categories')
+            ->assertPathIs('/categories')
             ->assertSee('Category created successfully')
             ->assertSee('Test Category')
             ->assertNoJavascriptErrors();
@@ -166,7 +165,7 @@ describe('Category Creation', function () {
     });
 
     it('validates required fields', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/categories/create');
 
@@ -178,7 +177,7 @@ describe('Category Creation', function () {
     });
 
     it('can search and select icons', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/categories/create');
 
@@ -201,7 +200,7 @@ describe('Category Creation', function () {
     });
 
     it('can clear icon selection', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/categories/create');
 
@@ -221,7 +220,7 @@ describe('Category Creation', function () {
 
 describe('Category Editing', function () {
     it('can edit existing category', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $category = $this->categories[0];
 
@@ -237,7 +236,7 @@ describe('Category Editing', function () {
             ->fill('description', 'Updated description')
             ->click('[data-testid="color-#EF4444"]') // Change color to red
             ->click('Update Category')
-            ->waitForPath('/categories')
+            ->assertPathIs('/categories')
             ->assertSee('Category updated successfully')
             ->assertSee('Updated Electronics')
             ->assertNoJavascriptErrors();
@@ -248,7 +247,7 @@ describe('Category Editing', function () {
     });
 
     it('can change category icon', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $category = $this->categories[0];
 
@@ -261,7 +260,7 @@ describe('Category Editing', function () {
             ->waitForText('Laptop')
             ->click('[data-icon="Laptop"]')
             ->click('Update Category')
-            ->waitForPath('/categories')
+            ->assertPathIs('/categories')
             ->assertSee('Category updated successfully')
             ->assertNoJavascriptErrors();
 
@@ -272,7 +271,7 @@ describe('Category Editing', function () {
 
 describe('Category Deletion', function () {
     it('can delete category with confirmation', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $category = $this->categories[2]; // Use inactive category
 
@@ -292,7 +291,7 @@ describe('Category Deletion', function () {
     });
 
     it('can cancel category deletion', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $category = $this->categories[2];
 

@@ -6,8 +6,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-
-use function Pest\Laravel\actingAs;
+use Illuminate\Support\Facades\Auth;
 
 uses(RefreshDatabase::class);
 
@@ -49,7 +48,7 @@ beforeEach(function () {
 
 describe('POS Interface', function () {
     it('loads POS interface correctly', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos');
 
@@ -57,14 +56,14 @@ describe('POS Interface', function () {
             ->assertSee('Products')
             ->assertSee('Cart')
             ->assertSee('Search products...')
-            ->assertElementExists('[data-testid="product-grid"]')
-            ->assertElementExists('[data-testid="cart-section"]')
-            ->assertElementExists('[data-testid="checkout-section"]')
+            ->assertPresent('[data-testid="product-grid"]')
+            ->assertPresent('[data-testid="cart-section"]')
+            ->assertPresent('[data-testid="checkout-section"]')
             ->assertNoJavascriptErrors();
     });
 
     it('displays products in grid layout', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos');
 
@@ -78,7 +77,7 @@ describe('POS Interface', function () {
     });
 
     it('can search for products', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos');
 
@@ -108,7 +107,7 @@ describe('POS Interface', function () {
             'is_active' => true,
         ]);
 
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos');
 
@@ -131,7 +130,7 @@ describe('POS Interface', function () {
 
 describe('Cart Management', function () {
     it('can add products to cart', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos');
 
@@ -145,7 +144,7 @@ describe('Cart Management', function () {
     });
 
     it('can adjust item quantities in cart', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos');
 
@@ -169,7 +168,7 @@ describe('Cart Management', function () {
     });
 
     it('can remove items from cart', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos');
 
@@ -188,7 +187,7 @@ describe('Cart Management', function () {
     });
 
     it('can clear entire cart', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos');
 
@@ -208,7 +207,7 @@ describe('Cart Management', function () {
     });
 
     it('persists cart data between page refreshes', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos');
 
@@ -227,7 +226,7 @@ describe('Cart Management', function () {
 
 describe('Checkout Process', function () {
     it('can complete checkout with existing customer', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos');
 
@@ -243,8 +242,8 @@ describe('Checkout Process', function () {
             ->assertNoJavascriptErrors();
 
         // Select existing customer
-        $page->selectValue('[data-testid="customer-select"]', $this->customers[0]->id)
-            ->selectValue('[data-testid="payment-method"]', 'cash')
+        $page->select('[data-testid="customer-select"]', $this->customers[0]->id)
+            ->select('[data-testid="payment-method"]', 'cash')
             ->click('Complete Order')
             ->waitForText('Order completed successfully')
             ->assertSee('Order completed successfully')
@@ -258,7 +257,7 @@ describe('Checkout Process', function () {
     });
 
     it('can create new customer during checkout', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos');
 
@@ -275,7 +274,7 @@ describe('Checkout Process', function () {
             ->fill('customer_name', 'John Doe')
             ->fill('customer_email', 'john@example.com')
             ->fill('customer_phone', '+1234567890')
-            ->selectValue('[data-testid="payment-method"]', 'credit_card')
+            ->select('[data-testid="payment-method"]', 'credit_card')
             ->click('Complete Order')
             ->waitForText('Order completed successfully')
             ->assertSee('Order completed successfully')
@@ -287,7 +286,7 @@ describe('Checkout Process', function () {
     });
 
     it('validates checkout form', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos');
 
@@ -315,7 +314,7 @@ describe('Checkout Process', function () {
             'is_active' => true,
         ]);
 
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos');
 
@@ -329,7 +328,7 @@ describe('Checkout Process', function () {
     });
 
     it('calculates tax and discounts correctly', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos');
 
@@ -339,22 +338,22 @@ describe('Checkout Process', function () {
 
         // Check subtotal, tax, and total calculations
         $page->assertSeeIn('[data-testid="cart-subtotal"]', '$999.99')
-            ->assertElementExists('[data-testid="cart-tax"]')
-            ->assertElementExists('[data-testid="cart-total"]')
+            ->assertPresent('[data-testid="cart-tax"]')
+            ->assertPresent('[data-testid="cart-total"]')
             ->assertNoJavascriptErrors();
     });
 });
 
 describe('POS Responsiveness', function () {
     it('works correctly on mobile devices', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos')
             ->resize(375, 667); // iPhone size
 
         $page->assertSee('Point of Sale')
-            ->assertElementExists('[data-testid="product-grid"]')
-            ->assertElementExists('[data-testid="cart-section"]')
+            ->assertPresent('[data-testid="product-grid"]')
+            ->assertPresent('[data-testid="cart-section"]')
             ->assertNoJavascriptErrors();
 
         // Test adding items on mobile
@@ -365,14 +364,14 @@ describe('POS Responsiveness', function () {
     });
 
     it('works correctly on tablet devices', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos')
             ->resize(768, 1024); // iPad size
 
         $page->assertSee('Point of Sale')
-            ->assertElementExists('[data-testid="product-grid"]')
-            ->assertElementExists('[data-testid="cart-section"]')
+            ->assertPresent('[data-testid="product-grid"]')
+            ->assertPresent('[data-testid="cart-section"]')
             ->assertNoJavascriptErrors();
     });
 });
@@ -385,7 +384,7 @@ describe('POS Performance', function () {
             'is_active' => true,
         ]);
 
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/pos');
 

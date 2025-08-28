@@ -5,7 +5,7 @@ use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-use function Pest\Laravel\actingAs;
+use Illuminate\Support\Facades\Auth;
 
 uses(RefreshDatabase::class);
 
@@ -49,7 +49,7 @@ beforeEach(function () {
 
 describe('Products Index Page', function () {
     it('displays all products with details', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/products');
 
@@ -65,12 +65,12 @@ describe('Products Index Page', function () {
     });
 
     it('can filter products by status', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/products');
 
         // Filter by active only
-        $page->selectValue('[data-testid="status-filter"]', 'active')
+        $page->select('[data-testid="status-filter"]', 'active')
             ->waitForText('iPhone 15')
             ->assertSee('iPhone 15')
             ->assertSee('Samsung Galaxy S24')
@@ -78,7 +78,7 @@ describe('Products Index Page', function () {
             ->assertNoJavascriptErrors();
 
         // Filter by inactive only
-        $page->selectValue('[data-testid="status-filter"]', 'inactive')
+        $page->select('[data-testid="status-filter"]', 'inactive')
             ->waitForText('Inactive Product')
             ->assertSee('Inactive Product')
             ->assertDontSee('iPhone 15')
@@ -87,11 +87,11 @@ describe('Products Index Page', function () {
     });
 
     it('can filter products by category', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/products');
 
-        $page->selectValue('[data-testid="category-filter"]', $this->categories[0]->id)
+        $page->select('[data-testid="category-filter"]', $this->categories[0]->id)
             ->waitForText('iPhone 15')
             ->assertSee('iPhone 15')
             ->assertSee('Samsung Galaxy S24')
@@ -100,7 +100,7 @@ describe('Products Index Page', function () {
     });
 
     it('can search products by name or SKU', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/products');
 
@@ -129,7 +129,7 @@ describe('Products Index Page', function () {
             'is_active' => true,
         ]);
 
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/products');
 
@@ -139,7 +139,7 @@ describe('Products Index Page', function () {
     });
 
     it('can toggle product status', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/products');
 
@@ -154,14 +154,14 @@ describe('Products Index Page', function () {
     });
 
     it('can bulk select and perform actions', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/products');
 
         // Select multiple products
         $page->check('[data-testid="select-'.$this->products[0]->id.'"]')
             ->check('[data-testid="select-'.$this->products[1]->id.'"]')
-            ->selectValue('[data-testid="bulk-action"]', 'deactivate')
+            ->select('[data-testid="bulk-action"]', 'deactivate')
             ->click('[data-testid="apply-bulk-action"]')
             ->waitForText('Bulk action completed')
             ->assertSee('Bulk action completed')
@@ -171,7 +171,7 @@ describe('Products Index Page', function () {
 
 describe('Product Creation', function () {
     it('can create a new product', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/products/create');
 
@@ -181,10 +181,10 @@ describe('Product Creation', function () {
             ->fill('price', '199.99')
             ->fill('sku', 'TEST-001')
             ->fill('stock_quantity', '100')
-            ->selectValue('[data-testid="category-select"]', $this->categories[0]->id)
+            ->select('[data-testid="category-select"]', $this->categories[0]->id)
             ->check('[data-testid="is-active"]')
             ->click('Create Product')
-            ->waitForPath('/products')
+            ->assertPathIs('/products')
             ->assertSee('Product created successfully')
             ->assertSee('New Test Product')
             ->assertNoJavascriptErrors();
@@ -195,7 +195,7 @@ describe('Product Creation', function () {
     });
 
     it('validates required fields', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/products/create');
 
@@ -209,7 +209,7 @@ describe('Product Creation', function () {
     });
 
     it('validates unique SKU', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/products/create');
 
@@ -218,7 +218,7 @@ describe('Product Creation', function () {
             ->fill('price', '99.99')
             ->fill('sku', 'IPH15-001') // Use existing SKU
             ->fill('stock_quantity', '10')
-            ->selectValue('[data-testid="category-select"]', $this->categories[0]->id)
+            ->select('[data-testid="category-select"]', $this->categories[0]->id)
             ->click('Create Product')
             ->waitForText('The sku has already been taken')
             ->assertSee('The sku has already been taken')
@@ -226,14 +226,14 @@ describe('Product Creation', function () {
     });
 
     it('validates price format', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/products/create');
 
         $page->fill('name', 'Test Product')
             ->fill('price', 'invalid-price')
             ->fill('sku', 'TEST-002')
-            ->selectValue('[data-testid="category-select"]', $this->categories[0]->id)
+            ->select('[data-testid="category-select"]', $this->categories[0]->id)
             ->click('Create Product')
             ->waitForText('The price must be a number')
             ->assertSee('The price must be a number')
@@ -243,7 +243,7 @@ describe('Product Creation', function () {
 
 describe('Product Editing', function () {
     it('can edit existing product', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $product = $this->products[0];
 
@@ -260,7 +260,7 @@ describe('Product Editing', function () {
             ->fill('price', '1099.99')
             ->fill('stock_quantity', '75')
             ->click('Update Product')
-            ->waitForPath('/products')
+            ->assertPathIs('/products')
             ->assertSee('Product updated successfully')
             ->assertSee('iPhone 15 Pro')
             ->assertSee('$1,099.99')
@@ -273,15 +273,15 @@ describe('Product Editing', function () {
     });
 
     it('can change product category', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $product = $this->products[0];
 
         $page = visit("/products/{$product->id}/edit");
 
-        $page->selectValue('[data-testid="category-select"]', $this->categories[1]->id)
+        $page->select('[data-testid="category-select"]', $this->categories[1]->id)
             ->click('Update Product')
-            ->waitForPath('/products')
+            ->assertPathIs('/products')
             ->assertSee('Product updated successfully')
             ->assertNoJavascriptErrors();
 
@@ -292,7 +292,7 @@ describe('Product Editing', function () {
 
 describe('Product Details', function () {
     it('shows product details page', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $product = $this->products[0];
 
@@ -309,7 +309,7 @@ describe('Product Details', function () {
     });
 
     it('has working action buttons', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $product = $this->products[0];
 
@@ -325,7 +325,7 @@ describe('Product Details', function () {
 
 describe('Product Deletion', function () {
     it('can delete product with confirmation', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $product = $this->products[2]; // Use inactive product
 

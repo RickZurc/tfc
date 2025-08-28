@@ -5,7 +5,7 @@ use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-use function Pest\Laravel\actingAs;
+use Illuminate\Support\Facades\Auth;
 
 uses(RefreshDatabase::class);
 
@@ -51,7 +51,7 @@ beforeEach(function () {
 
 describe('Customer Index Page', function () {
     it('displays all customers with their information', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers');
 
@@ -72,7 +72,7 @@ describe('Customer Index Page', function () {
     });
 
     it('can search customers by name, email, or phone', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers');
 
@@ -105,12 +105,12 @@ describe('Customer Index Page', function () {
     });
 
     it('can filter customers by status', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers');
 
         // Filter by active status
-        $page->selectValue('[data-testid="status-filter"]', 'active')
+        $page->select('[data-testid="status-filter"]', 'active')
             ->waitForText('Alice Johnson')
             ->assertSee('Alice Johnson')
             ->assertSee('Bob Smith')
@@ -118,7 +118,7 @@ describe('Customer Index Page', function () {
             ->assertNoJavascriptErrors();
 
         // Filter by inactive status
-        $page->selectValue('[data-testid="status-filter"]', 'inactive')
+        $page->select('[data-testid="status-filter"]', 'inactive')
             ->waitForText('Charlie Brown')
             ->assertSee('Charlie Brown')
             ->assertDontSee('Alice Johnson')
@@ -127,7 +127,7 @@ describe('Customer Index Page', function () {
     });
 
     it('can sort customers by different fields', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers');
 
@@ -148,7 +148,7 @@ describe('Customer Index Page', function () {
     });
 
     it('shows customer statistics', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers');
 
@@ -156,14 +156,14 @@ describe('Customer Index Page', function () {
             ->assertSee('Active Customers')
             ->assertSee('New This Month')
             ->assertSee('Customer Growth')
-            ->assertElementExists('[data-testid="total-customers-count"]')
-            ->assertElementExists('[data-testid="active-customers-count"]')
-            ->assertElementExists('[data-testid="new-customers-month"]')
+            ->assertPresent('[data-testid="total-customers-count"]')
+            ->assertPresent('[data-testid="active-customers-count"]')
+            ->assertPresent('[data-testid="new-customers-month"]')
             ->assertNoJavascriptErrors();
     });
 
     it('can export customers to CSV', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers');
 
@@ -175,7 +175,7 @@ describe('Customer Index Page', function () {
 
 describe('Customer Creation', function () {
     it('can create new customer with valid data', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers/create');
 
@@ -183,13 +183,13 @@ describe('Customer Creation', function () {
             ->fill('name', 'David Wilson')
             ->fill('email', 'david@example.com')
             ->fill('phone', '555-0104')
-            ->selectValue('status', 'active')
+            ->select('status', 'active')
             ->fill('address', '123 Main St')
             ->fill('city', 'New York')
             ->fill('postal_code', '10001')
             ->fill('notes', 'VIP customer')
             ->click('Create Customer')
-            ->waitForPath('/customers')
+            ->assertPathIs('/customers')
             ->assertSee('Customer created successfully')
             ->assertSee('David Wilson')
             ->assertNoJavascriptErrors();
@@ -203,7 +203,7 @@ describe('Customer Creation', function () {
     });
 
     it('validates required fields', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers/create');
 
@@ -216,7 +216,7 @@ describe('Customer Creation', function () {
     });
 
     it('validates email format', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers/create');
 
@@ -230,7 +230,7 @@ describe('Customer Creation', function () {
     });
 
     it('validates unique email', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers/create');
 
@@ -244,14 +244,14 @@ describe('Customer Creation', function () {
     });
 
     it('can cancel customer creation', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers/create');
 
         $page->fill('name', 'Test User')
             ->fill('email', 'test@example.com')
             ->click('Cancel')
-            ->waitForPath('/customers')
+            ->assertPathIs('/customers')
             ->assertDontSee('Test User')
             ->assertNoJavascriptErrors();
     });
@@ -259,7 +259,7 @@ describe('Customer Creation', function () {
 
 describe('Customer Details and Editing', function () {
     it('shows customer details with order history', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $customer = $this->customers[0];
 
@@ -277,7 +277,7 @@ describe('Customer Details and Editing', function () {
     });
 
     it('can edit customer information', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $customer = $this->customers[0];
 
@@ -289,9 +289,9 @@ describe('Customer Details and Editing', function () {
             ->assertInputValue('phone', '555-0101')
             ->fill('name', 'Alice Johnson Updated')
             ->fill('phone', '555-0199')
-            ->selectValue('status', 'inactive')
+            ->select('status', 'inactive')
             ->click('Update Customer')
-            ->waitForPath("/customers/{$customer->id}")
+            ->assertPathIs("/customers/{$customer->id}")
             ->assertSee('Customer updated successfully')
             ->assertSee('Alice Johnson Updated')
             ->assertSee('555-0199')
@@ -306,7 +306,7 @@ describe('Customer Details and Editing', function () {
     });
 
     it('can delete customer without orders', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $customer = $this->customers[2]; // Charlie has no orders
 
@@ -316,7 +316,7 @@ describe('Customer Details and Editing', function () {
             ->waitForText('Delete Customer')
             ->assertSee('Are you sure you want to delete this customer?')
             ->click('Confirm Delete')
-            ->waitForPath('/customers')
+            ->assertPathIs('/customers')
             ->assertSee('Customer deleted successfully')
             ->assertDontSee('Charlie Brown')
             ->assertNoJavascriptErrors();
@@ -326,7 +326,7 @@ describe('Customer Details and Editing', function () {
     });
 
     it('prevents deletion of customer with orders', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $customer = $this->customers[0]; // Alice has orders
 
@@ -345,7 +345,7 @@ describe('Customer Details and Editing', function () {
     });
 
     it('can add notes to customer', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $customer = $this->customers[0];
 
@@ -364,7 +364,7 @@ describe('Customer Details and Editing', function () {
 
 describe('Customer Analytics', function () {
     it('displays customer analytics and insights', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers?view=analytics');
 
@@ -373,13 +373,13 @@ describe('Customer Analytics', function () {
             ->assertSee('Customer Lifetime Value')
             ->assertSee('Top Customers')
             ->assertSee('Customer Retention')
-            ->assertElementExists('[data-testid="customer-growth-chart"]')
-            ->assertElementExists('[data-testid="customer-value-chart"]')
+            ->assertPresent('[data-testid="customer-growth-chart"]')
+            ->assertPresent('[data-testid="customer-value-chart"]')
             ->assertNoJavascriptErrors();
     });
 
     it('shows customer lifetime value calculations', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers?view=analytics');
 
@@ -391,16 +391,16 @@ describe('Customer Analytics', function () {
     });
 
     it('can filter analytics by customer segments', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers?view=analytics');
 
-        $page->selectValue('[data-testid="segment-filter"]', 'high-value')
+        $page->select('[data-testid="segment-filter"]', 'high-value')
             ->waitForText('High-Value Customers')
             ->assertSee('High-Value Customers')
             ->assertNoJavascriptErrors();
 
-        $page->selectValue('[data-testid="segment-filter"]', 'new')
+        $page->select('[data-testid="segment-filter"]', 'new')
             ->waitForText('New Customers')
             ->assertSee('New Customers')
             ->assertNoJavascriptErrors();
@@ -409,7 +409,7 @@ describe('Customer Analytics', function () {
 
 describe('Customer Import/Export', function () {
     it('can import customers from CSV', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers/import');
 
@@ -422,7 +422,7 @@ describe('Customer Import/Export', function () {
     });
 
     it('validates CSV format during import', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers/import');
 
@@ -437,32 +437,32 @@ describe('Customer Import/Export', function () {
 
 describe('Mobile Customer Management', function () {
     it('works correctly on mobile devices', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers')
             ->resize(375, 667); // iPhone size
 
         $page->assertSee('Customers')
-            ->assertElementExists('[data-testid="customers-table"]')
+            ->assertPresent('[data-testid="customers-table"]')
             ->assertNoJavascriptErrors();
 
         // Test mobile-specific interactions
         $customer = $this->customers[0];
         $page->click('[data-testid="customer-'.$customer->id.'"]')
-            ->waitForPath("/customers/{$customer->id}")
+            ->assertPathIs("/customers/{$customer->id}")
             ->assertSee('Customer Details')
             ->assertNoJavascriptErrors();
     });
 
     it('displays mobile-optimized customer cards', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/customers')
             ->resize(375, 667);
 
         $page->click('[data-testid="mobile-view-toggle"]')
             ->waitForText('Card View')
-            ->assertElementExists('[data-testid="customer-card"]')
+            ->assertPresent('[data-testid="customer-card"]')
             ->assertNoJavascriptErrors();
     });
 });

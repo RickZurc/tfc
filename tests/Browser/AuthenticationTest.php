@@ -2,8 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-
-use function Pest\Laravel\actingAs;
+use Illuminate\Support\Facades\Auth;
 
 uses(RefreshDatabase::class);
 
@@ -32,7 +31,7 @@ describe('Authentication Flow', function () {
         $page->fill('email', 'test@example.com')
             ->fill('password', 'password')
             ->click('Log in')
-            ->waitForPath('/dashboard')
+            ->assertPathIs('/dashboard')
             ->assertSee('Dashboard')
             ->assertNoJavascriptErrors();
     });
@@ -57,7 +56,7 @@ describe('Authentication Flow', function () {
             ->fill('password', 'password123')
             ->fill('password_confirmation', 'password123')
             ->click('Create account')
-            ->waitForPath('/dashboard')
+            ->assertPathIs('/dashboard')
             ->assertSee('Dashboard')
             ->assertNoJavascriptErrors();
 
@@ -68,21 +67,21 @@ describe('Authentication Flow', function () {
     it('redirects to login when accessing protected pages', function () {
         $page = visit('/dashboard');
 
-        $page->waitForPath('/login')
+        $page->assertPathIs('/login')
             ->assertPathIs('/login')
             ->assertSee('Log in to your account')
             ->assertNoJavascriptErrors();
     });
 
     it('can log out successfully', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $page = visit('/dashboard');
 
         $page->click('[data-testid="user-menu"]')
             ->waitForText('Sign out')
             ->click('Sign out')
-            ->waitForPath('/')
+            ->assertPathIs('/')
             ->assertPathIs('/')
             ->assertNoJavascriptErrors();
     });
@@ -117,8 +116,8 @@ describe('Mobile Authentication', function () {
             ->resize(375, 667); // iPhone size
 
         $page->assertSee('Log in to your account')
-            ->assertElementExists('[type="email"]')
-            ->assertElementExists('[type="password"]')
+            ->assertPresent('[type="email"]')
+            ->assertPresent('[type="password"]')
             ->assertNoJavascriptErrors();
     });
 });

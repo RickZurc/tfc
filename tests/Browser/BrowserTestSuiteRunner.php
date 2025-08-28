@@ -2,7 +2,7 @@
 
 use App\Models\User;
 
-use function Pest\Laravel\actingAs;
+use Illuminate\Support\Facades\Auth;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -10,7 +10,7 @@ beforeEach(function () {
 
 describe('Browser Test Suite Runner', function () {
     it('runs authentication tests', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $this->artisan('test', [
             'filter' => 'Browser/AuthenticationTest',
@@ -21,7 +21,7 @@ describe('Browser Test Suite Runner', function () {
     });
 
     it('runs dashboard tests', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $this->artisan('test', [
             'filter' => 'Browser/DashboardTest',
@@ -32,7 +32,7 @@ describe('Browser Test Suite Runner', function () {
     });
 
     it('runs category management tests', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $this->artisan('test', [
             'filter' => 'Browser/CategoryManagementTest',
@@ -43,7 +43,7 @@ describe('Browser Test Suite Runner', function () {
     });
 
     it('runs product management tests', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $this->artisan('test', [
             'filter' => 'Browser/ProductManagementTest',
@@ -54,7 +54,7 @@ describe('Browser Test Suite Runner', function () {
     });
 
     it('runs POS system tests', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $this->artisan('test', [
             'filter' => 'Browser/POSSystemTest',
@@ -65,7 +65,7 @@ describe('Browser Test Suite Runner', function () {
     });
 
     it('runs order management tests', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $this->artisan('test', [
             'filter' => 'Browser/OrderManagementTest',
@@ -76,7 +76,7 @@ describe('Browser Test Suite Runner', function () {
     });
 
     it('runs customer management tests', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $this->artisan('test', [
             'filter' => 'Browser/CustomerManagementTest',
@@ -89,7 +89,7 @@ describe('Browser Test Suite Runner', function () {
 
 describe('Full Application Browser Test Suite', function () {
     it('runs complete browser test suite', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $this->artisan('test', [
             'testsuite' => 'Browser',
@@ -101,7 +101,7 @@ describe('Full Application Browser Test Suite', function () {
     });
 
     it('generates browser test coverage report', function () {
-        actingAs($this->user);
+        Auth::login($this->user);
 
         $this->artisan('test', [
             'testsuite' => 'Browser',

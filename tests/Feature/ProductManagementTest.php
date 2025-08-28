@@ -33,14 +33,15 @@ describe('Product Management', function () {
 
         $response = $this->post(route('products.store'), $productData);
 
-        expect($response)
-            ->toRedirect(route('products.index'))
-            ->and('products')->toHaveRecord([
-                'name' => 'Test Product',
-                'slug' => 'test-product',
-                'sku' => 'TEST001',
-            ])
-            ->and(Product::latest()->first())
+        $response->assertRedirect(route('products.index'));
+        
+        expect('products')->toHaveRecord([
+            'name' => 'Test Product',
+            'slug' => 'test-product',
+            'sku' => 'TEST001',
+        ]);
+        
+        expect(Product::latest()->first())
             ->name->toBe('Test Product')
             ->slug->toBe('test-product')
             ->category_id->toBe($category->id);
@@ -84,9 +85,9 @@ describe('Product Management', function () {
 
         $response = $this->put(route('products.update', $product), $updateData);
 
-        expect($response)
-            ->toRedirect(route('products.index'))
-            ->and($product->fresh())
+        $response->assertRedirect(route('products.index'));
+        
+        expect($product->fresh())
             ->name->toBe('Updated Product Name')
             ->slug->toBe('updated-product-name')
             ->price->toBe('149.99');
@@ -97,9 +98,9 @@ describe('Product Management', function () {
 
         $response = $this->delete(route('products.destroy', $product));
 
-        expect($response)
-            ->toRedirect(route('products.index'))
-            ->and(Product::find($product->id))
+        $response->assertRedirect(route('products.index'));
+        
+        expect(Product::find($product->id))
             ->toBeNull();
     });
 
