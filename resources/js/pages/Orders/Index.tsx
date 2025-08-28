@@ -27,9 +27,9 @@ import {
 import React, { useEffect, useRef, useState } from 'react';
 
 // Helper function to safely format currency
-const formatCurrency = (value: any): string => {
+const formatCurrency = (value: string | number | null | undefined): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
-    return isNaN(num) ? '0.00' : num.toFixed(2);
+    return isNaN(num as number) || num === null || num === undefined ? '0.00' : (num as number).toFixed(2);
 };
 
 // Helper function to format date
@@ -97,10 +97,26 @@ interface Order {
     }>;
 }
 
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginationMeta {
+    current_page: number;
+    from: number;
+    last_page: number;
+    path: string;
+    per_page: number;
+    to: number;
+    total: number;
+}
+
 interface OrdersData {
     data: Order[];
-    links: any;
-    meta: any;
+    links: PaginationLink[];
+    meta: PaginationMeta;
 }
 
 interface Stats {
@@ -215,7 +231,7 @@ export default function OrdersIndex() {
         }
 
         const executeFilter = () => {
-            const params: Record<string, any> = {};
+            const params: Record<string, string> = {};
 
             // Use current state values, but override with any updates
             const currentSearch = updates.search !== undefined ? updates.search : searchQuery;
@@ -234,7 +250,7 @@ export default function OrdersIndex() {
             if (currentDateFrom) {
                 try {
                     params.date_from = currentDateFrom.toISOString().split('T')[0];
-                } catch (error) {
+                } catch {
                     console.error('Invalid date_from:', currentDateFrom);
                 }
             }
@@ -242,7 +258,7 @@ export default function OrdersIndex() {
             if (currentDateTo) {
                 try {
                     params.date_to = currentDateTo.toISOString().split('T')[0];
-                } catch (error) {
+                } catch {
                     console.error('Invalid date_to:', currentDateTo);
                 }
             }
@@ -764,7 +780,7 @@ export default function OrdersIndex() {
                         {orders.links && (
                             <div className="mt-6 flex justify-center">
                                 <div className="flex gap-1">
-                                    {orders.links.map((link: any, index: number) => (
+                                    {orders.links.map((link: PaginationLink, index: number) => (
                                         <Button
                                             key={index}
                                             variant={link.active ? 'default' : 'outline'}

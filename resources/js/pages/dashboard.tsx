@@ -8,12 +8,12 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { Activity, AlertTriangle, BarChart3, Calendar, DollarSign, Package, RotateCcw, ShoppingCart, TrendingUp, Trophy, Users } from 'lucide-react';
 
 // Helper function to safely format numbers
-const formatCurrency = (value: any): string => {
+const formatCurrency = (value: number | string): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
     return isNaN(num) ? '0.00' : num.toFixed(2);
 };
 
-const formatNumber = (value: any, decimals: number = 1): string => {
+const formatNumber = (value: number | string, decimals: number = 1): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
     return isNaN(num) ? '0' : num.toFixed(decimals);
 };
@@ -131,8 +131,8 @@ function PieChart({ data, title }: { data: CategorySales[]; title: string }) {
                                     value={percentage}
                                     className="h-2"
                                     style={{
-                                        ['--progress-background' as any]: item.color,
-                                    }}
+                                        '--progress-background': item.color,
+                                    } as React.CSSProperties}
                                 />
                                 <div className="text-xs text-muted-foreground">{formatNumber(percentage)}% of total sales</div>
                             </div>

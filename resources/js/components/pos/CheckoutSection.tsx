@@ -2,14 +2,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Calculator, CheckCircle, CreditCard, DollarSign } from 'lucide-react';
+import { PaymentMethod } from '@/types/pos';
 
 // Helper function to safely format currency
-const formatCurrency = (value: any): string => {
+const formatCurrency = (value: number | string): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
     return isNaN(num) ? '0.00' : num.toFixed(2);
 };
-
-type PaymentMethod = 'cash' | 'card' | 'digital';
 
 interface CheckoutSectionProps {
     paymentMethod: PaymentMethod;

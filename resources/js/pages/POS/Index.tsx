@@ -12,47 +12,41 @@ import CategoryFilter from '@/components/pos/CategoryFilter';
 import ProductGrid from '@/components/pos/ProductGrid';
 import ProductSearch from '@/components/pos/ProductSearch';
 import SaleCompletionModal from '@/components/pos/SaleCompletionModal';
+import { Product, Category, CartItem } from '@/types/pos';
 
 // Helper function to safely format currency
-const formatCurrency = (value: any): string => {
+const formatCurrency = (value: number | string): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
     return isNaN(num) ? '0.00' : num.toFixed(2);
 };
 
-interface Product {
+interface OrderResult {
     id: number;
-    name: string;
-    price: string | number; // Laravel returns decimals as strings
-    sku: string;
-    stock_quantity: number;
-    track_stock: boolean;
-    category: {
-        id: number;
-        name: string;
-        color: string;
-    };
-}
-
-interface Category {
-    id: number;
-    name: string;
-    color: string;
-    icon: string;
-    products: Product[];
-}
-
-interface CartItem extends Product {
-    quantity: number;
+    order_number: string;
     total: number;
-    price: number; // Ensure cart items have numeric price
+    total_amount: number;
+    itemCount: number;
+    subtotal?: number;
+    originalSubtotal?: number;
+    discount_amount?: number;
+    originalDiscount?: number;
+    amount_paid: number;
+    change_amount?: number;
+    payment_method: string;
+    created_at: string;
+}
+
+interface CartBackupInfo {
+    item_count: number;
+    saved_at: string;
+    discount_amount?: string;
+    paymentMethod?: string;
 }
 
 interface PageProps extends Record<string, unknown> {
     categories: Category[];
     products: Product[];
 }
-
-type PaymentMethod = 'cash' | 'card' | 'digital';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -70,7 +64,7 @@ export default function POSIndex() {
         discountAmount,
         discountType,
         paymentMethod,
-        customerId,
+        // customerId, // Unused for now
         isLoading,
         setCart,
         setDiscountAmount,
@@ -78,41 +72,41 @@ export default function POSIndex() {
         setPaymentMethod,
         setCustomerId,
         clearCart,
-        clearStoredCart,
+        // clearStoredCart, // Unused for now
         saveCartToServer,
-        getCartInfo,
+        // getCartInfo, // Unused for now
     } = usePersistedCart();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
     const [amountPaid, setAmountPaid] = useState<string>('');
     const [saleCompleted, setSaleCompleted] = useState<boolean>(false);
-    const [completedOrder, setCompletedOrder] = useState<any>(null);
+    const [completedOrder, setCompletedOrder] = useState<OrderResult | null>(null);
     const [paymentError, setPaymentError] = useState<string>('');
     const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
     const [showCartRestoreDialog, setShowCartRestoreDialog] = useState(false);
-    const [cartBackupInfo, setCartBackupInfo] = useState<any>(null);
+    const [cartBackupInfo, setCartBackupInfo] = useState<CartBackupInfo | null>(null);
 
     // Check for server backup on component mount
     useEffect(() => {
-        checkForServerBackup();
-    }, []);
+        const checkForServerBackup = async () => {
+            if (cart.length > 0) return; // Don't check if we already have items
 
-    const checkForServerBackup = async () => {
-        if (cart.length > 0) return; // Don't check if we already have items
+            try {
+                const response = await fetch('/api/pos/cart-info');
+                const result = await response.json();
 
-        try {
-            const response = await fetch('/api/pos/cart-info');
-            const result = await response.json();
-
-            if (result.success && result.has_backup) {
-                setCartBackupInfo(result.info);
-                setShowCartRestoreDialog(true);
+                if (result.success && result.has_backup) {
+                    setCartBackupInfo(result.info);
+                    setShowCartRestoreDialog(true);
+                }
+            } catch (error) {
+                console.error('Failed to check for cart backup:', error);
             }
-        } catch (error) {
-            console.error('Failed to check for cart backup:', error);
-        }
-    };
+        };
+        
+        checkForServerBackup();
+    }, [cart.length]);
 
     const restoreFromServerBackup = async () => {
         try {
@@ -155,8 +149,9 @@ export default function POSIndex() {
 
     const filteredProducts = products.filter((product) => {
         const matchesSearch =
-            product.name.toLowerCase().includes(searchQuery.toLowerCase()) || product.sku.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesCategory = selectedCategory === null || product.category.id === selectedCategory;
+            product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            (product.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+        const matchesCategory = selectedCategory === null || product.category?.id === selectedCategory;
         return matchesSearch && matchesCategory;
     });
 
@@ -170,7 +165,22 @@ export default function POSIndex() {
                     item.id === product.id ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * price } : item,
                 );
             } else {
-                return [...prevCart, { ...product, price, quantity: 1, total: price }];
+                // Convert Product to CartItem with required properties
+                const cartItem: CartItem = {
+                    id: product.id,
+                    name: product.name,
+                    price: price,
+                    quantity: 1,
+                    total: price,
+                    sku: product.sku || '',
+                    stock_quantity: product.stock_quantity,
+                    category: product.category ? {
+                        id: product.category.id,
+                        name: product.category.name,
+                        color: product.category.color || '#gray'
+                    } : { id: 0, name: 'Unknown', color: '#gray' }
+                };
+                return [...prevCart, cartItem];
             }
         });
     };
@@ -243,11 +253,11 @@ export default function POSIndex() {
             </div>
             <div class="row">
               <span>Subtotal:</span>
-              <span>$${formatCurrency(completedOrder.subtotal || completedOrder.originalSubtotal)}</span>
+              <span>$${formatCurrency(completedOrder.subtotal || completedOrder.originalSubtotal || 0)}</span>
             </div>
             <div class="row">
               <span>Discount:</span>
-              <span>-$${formatCurrency(completedOrder.discount_amount || completedOrder.originalDiscount)}</span>
+              <span>-$${formatCurrency(completedOrder.discount_amount || completedOrder.originalDiscount || 0)}</span>
             </div>
             <div class="row total">
               <span>TOTAL:</span>
@@ -262,7 +272,7 @@ export default function POSIndex() {
                     ? `
             <div class="row">
               <span>Change:</span>
-              <span>$${formatCurrency(completedOrder.change_amount)}</span>
+              <span>$${formatCurrency(completedOrder.change_amount || 0)}</span>
             </div>
             `
                     : ''

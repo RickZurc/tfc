@@ -1,19 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-
-interface Category {
-    id: number;
-    name: string;
-    color: string;
-    icon: string;
-    products: any[];
-}
-
-interface CategoryFilterProps {
-    categories: Category[];
-    selectedCategory: number | null;
-    onCategoryChange: (categoryId: number | null) => void;
-}
+import { CategoryFilterProps } from '@/types/pos';
 
 export default function CategoryFilter({ categories, selectedCategory, onCategoryChange }: CategoryFilterProps) {
     return (

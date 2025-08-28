@@ -74,7 +74,7 @@ export default function ShowCategory() {
         setDeleteDialog(false);
     };
 
-    const formatCurrency = (value: any): string => {
+    const formatCurrency = (value: number | string | null | undefined): string => {
         const num = typeof value === 'string' ? parseFloat(value) : value;
         return isNaN(num) || num === null || num === undefined ? '0.00' : num.toFixed(2);
     };

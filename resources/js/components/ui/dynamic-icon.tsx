@@ -12,7 +12,7 @@ export function DynamicIcon({ name, ...props }: DynamicIconProps) {
   }
 
   // Get the icon component from the LucideIcons namespace
-  const IconComponent = (LucideIcons as any)[name]
+  const IconComponent = (LucideIcons as unknown as Record<string, React.ComponentType<LucideProps>>)[name]
   
   if (!IconComponent) {
     return <HelpCircle {...props} />

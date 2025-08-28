@@ -8,9 +8,9 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, Calendar, CreditCard, Package, Receipt, User } from 'lucide-react';
 
 // Helper function to safely format currency
-const formatCurrency = (value: any): string => {
+const formatCurrency = (value: string | number | null | undefined): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
-    return isNaN(num) ? '0.00' : num.toFixed(2);
+    return isNaN(num as number) || num === null || num === undefined ? '0.00' : (num as number).toFixed(2);
 };
 
 // Helper function to format date

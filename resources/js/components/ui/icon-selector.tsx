@@ -28,7 +28,7 @@ const getAllIconNames = (): string[] => {
             }
             
             // Include icons that are objects (React components) and PascalCase
-            const isObject = typeof (LucideIcons as any)[name] === 'object'
+            const isObject = typeof (LucideIcons as unknown as Record<string, unknown>)[name] === 'object'
             const isPascalCase = name[0] === name[0].toUpperCase()
             
             // Exclude the "Icon" suffixed versions (we want the base name)

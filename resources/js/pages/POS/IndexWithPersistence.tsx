@@ -12,9 +12,9 @@ import { Calculator, CheckCircle, CreditCard, DollarSign, Minus, Plus, Receipt, 
 import { useEffect, useState } from 'react';
 
 // Helper function to safely format currency
-const formatCurrency = (value: any): string => {
+const formatCurrency = (value: string | number | null | undefined): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
-    return isNaN(num) ? '0.00' : num.toFixed(2);
+    return isNaN(num as number) || num === null || num === undefined ? '0.00' : (num as number).toFixed(2);
 };
 
 interface Product {
@@ -38,10 +38,24 @@ interface Category {
     products: Product[];
 }
 
-interface CartItem extends Product {
-    quantity: number;
-    total: number;
-    price: number; // Ensure cart items have numeric price
+interface CompletedOrder {
+    order_number: string;
+    itemCount: number;
+    subtotal?: number;
+    originalSubtotal?: number;
+    discount_amount?: number;
+    originalDiscount?: number;
+    total_amount: number;
+    amount_paid: number;
+    change_amount?: number;
+    payment_method: string;
+}
+
+interface CartBackupInfo {
+    item_count: number;
+    saved_at: string;
+    discount_amount?: string;
+    paymentMethod?: string;
 }
 
 interface PageProps extends Record<string, unknown> {
@@ -65,7 +79,7 @@ export default function POSIndexWithPersistence() {
         discountAmount,
         discountType,
         paymentMethod,
-        customerId,
+        // customerId, // Unused for now
         isLoading,
         setCart,
         setDiscountAmount,
@@ -73,41 +87,42 @@ export default function POSIndexWithPersistence() {
         setPaymentMethod,
         setCustomerId,
         clearCart,
-        clearStoredCart,
+        // clearStoredCart, // Unused for now
         saveCartToServer,
-        getCartInfo,
+        // getCartInfo, // Unused for now
     } = usePersistedCart();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
     const [amountPaid, setAmountPaid] = useState<string>('');
     const [saleCompleted, setSaleCompleted] = useState<boolean>(false);
-    const [completedOrder, setCompletedOrder] = useState<any>(null);
+    const [completedOrder, setCompletedOrder] = useState<CompletedOrder | null>(null);
     const [paymentError, setPaymentError] = useState<string>('');
     const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
     const [showCartRestoreDialog, setShowCartRestoreDialog] = useState(false);
-    const [cartBackupInfo, setCartBackupInfo] = useState<any>(null);
+    const [cartBackupInfo, setCartBackupInfo] = useState<CartBackupInfo | null>(null);
+    const [cartBackupInfo, setCartBackupInfo] = useState<CartBackupInfo | null>(null);
 
     // Check for server backup on component mount
     useEffect(() => {
-        checkForServerBackup();
-    }, []);
+        const checkForServerBackup = async () => {
+            if (cart.length > 0) return; // Don't check if we already have items
 
-    const checkForServerBackup = async () => {
-        if (cart.length > 0) return; // Don't check if we already have items
+            try {
+                const response = await fetch('/api/pos/cart-info');
+                const result = await response.json();
 
-        try {
-            const response = await fetch('/api/pos/cart-info');
-            const result = await response.json();
-
-            if (result.success && result.has_backup) {
-                setCartBackupInfo(result.info);
-                setShowCartRestoreDialog(true);
+                if (result.success && result.has_backup) {
+                    setCartBackupInfo(result.info);
+                    setShowCartRestoreDialog(true);
+                }
+            } catch (error) {
+                console.error('Failed to check for cart backup:', error);
             }
-        } catch (error) {
-            console.error('Failed to check for cart backup:', error);
-        }
-    };
+        };
+        
+        checkForServerBackup();
+    }, [cart.length, setCartBackupInfo]);
 
     const restoreFromServerBackup = async () => {
         try {

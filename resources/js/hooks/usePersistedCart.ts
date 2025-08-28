@@ -35,18 +35,6 @@ export function usePersistedCart() {
     const [customerId, setCustomerId] = useState<number | undefined>();
     const [isLoading, setIsLoading] = useState(true);
 
-    // Load cart from localStorage on component mount
-    useEffect(() => {
-        loadCartFromStorage();
-    }, []);
-
-    // Save cart to localStorage whenever cart state changes
-    useEffect(() => {
-        if (!isLoading) {
-            saveCartToStorage();
-        }
-    }, [cart, discountAmount, discountType, paymentMethod, customerId, isLoading]);
-
     const loadCartFromStorage = useCallback(() => {
         try {
             const storedData = localStorage.getItem(CART_STORAGE_KEY);
@@ -115,6 +103,18 @@ export function usePersistedCart() {
             }
         }
     }, [cart, discountAmount, discountType, paymentMethod, customerId]);
+
+    // Load cart from localStorage on component mount
+    useEffect(() => {
+        loadCartFromStorage();
+    }, [loadCartFromStorage]);
+
+    // Save cart to localStorage whenever cart state changes
+    useEffect(() => {
+        if (!isLoading) {
+            saveCartToStorage();
+        }
+    }, [cart, discountAmount, discountType, paymentMethod, customerId, isLoading, saveCartToStorage]);
 
     const clearCart = useCallback(() => {
         setCart([]);

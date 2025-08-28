@@ -34,7 +34,7 @@ interface Product {
 interface Props {
     products: {
         data: Product[];
-        links: any[];
+        links: { url: string | null; label: string; active: boolean }[];
         current_page: number;
         last_page: number;
         per_page: number;

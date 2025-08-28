@@ -28,7 +28,7 @@ interface Category {
 interface PageProps extends Record<string, unknown> {
     categories: {
         data: Category[];
-        links: any[];
+        links: { url: string | null; label: string; active: boolean }[];
         current_page: number;
         last_page: number;
         per_page: number;
@@ -304,7 +304,7 @@ export default function CategoriesIndex() {
                 {categories.links && categories.data.length > 0 && (
                     <div className="mt-8 flex justify-center">
                         <div className="flex gap-1">
-                            {categories.links.map((link: any, index: number) => (
+                            {categories.links.map((link, index: number) => (
                                 <Button
                                     key={index}
                                     variant={link.active ? 'default' : 'outline'}

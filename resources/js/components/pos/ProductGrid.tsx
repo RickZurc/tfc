@@ -1,25 +1,12 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Product } from '@/types/pos';
 
 // Helper function to safely format currency
-const formatCurrency = (value: any): string => {
+const formatCurrency = (value: number | string): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
     return isNaN(num) ? '0.00' : num.toFixed(2);
 };
-
-interface Product {
-    id: number;
-    name: string;
-    price: string | number;
-    sku: string;
-    stock_quantity: number;
-    track_stock: boolean;
-    category: {
-        id: number;
-        name: string;
-        color: string;
-    };
-}
 
 interface ProductGridProps {
     products: Product[];

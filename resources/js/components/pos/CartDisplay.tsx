@@ -4,22 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Calculator, CheckCircle, CreditCard, DollarSign, Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
+import { CartItem, PaymentMethod } from '@/types/pos';
 
 // Helper function to safely format currency
-const formatCurrency = (value: any): string => {
+const formatCurrency = (value: number | string): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
     return isNaN(num) ? '0.00' : num.toFixed(2);
 };
-
-interface CartItem {
-    id: number;
-    name: string;
-    price: number;
-    quantity: number;
-    total: number;
-}
-
-type PaymentMethod = 'cash' | 'card' | 'digital';
 
 interface CartDisplayProps {
     cart: CartItem[];
