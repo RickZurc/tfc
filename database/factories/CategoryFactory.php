@@ -18,10 +18,10 @@ class CategoryFactory extends Factory
     public function definition(): array
     {
         $name = $this->faker->words(2, true);
-        
+
         return [
             'name' => $name,
-            'slug' => Str::slug($name) . '-' . $this->faker->unique()->numberBetween(1, 999),
+            'slug' => Str::slug($name).'-'.$this->faker->unique()->numberBetween(1, 999),
             'description' => $this->faker->optional()->sentence(),
             'color' => $this->faker->hexColor(),
             'icon' => $this->faker->optional()->randomElement(['shopping-cart', 'package', 'tag', 'star']),

@@ -14,9 +14,10 @@ class OrderSeeder extends Seeder
         // Generate sample orders using the existing customers and users
         $customers = \App\Models\Customer::all();
         $users = \App\Models\User::all();
-        
+
         if ($customers->isEmpty() || $users->isEmpty()) {
             $this->command->warn('No customers or users found. Please run CustomerSeeder first.');
+
             return;
         }
 

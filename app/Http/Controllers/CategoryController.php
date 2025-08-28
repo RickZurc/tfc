@@ -86,7 +86,7 @@ class CategoryController extends Controller
     public function update(UpdateCategoryRequest $request, Category $category)
     {
         $validated = $request->validated();
-        
+
         // Only update slug if name changed
         if ($validated['name'] !== $category->name) {
             $validated['slug'] = Str::slug($validated['name']);
@@ -115,7 +115,7 @@ class CategoryController extends Controller
     public function toggleStatus(Category $category)
     {
         $category->update([
-            'is_active' => !$category->is_active,
+            'is_active' => ! $category->is_active,
         ]);
 
         $status = $category->is_active ? 'activated' : 'deactivated';

@@ -1,21 +1,27 @@
 <?php
 
-use App\Models\{User, Category, Product, Customer, Order, OrderItem};
+use App\Models\Category;
+use App\Models\Customer;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Product;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use function Pest\Laravel\{actingAs};
+
+use function Pest\Laravel\actingAs;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->user = User::factory()->create();
-    
+
     // Create test data
     $this->customers = Customer::factory()->count(3)->create();
     $this->category = Category::factory()->create();
     $this->products = Product::factory()->count(5)->create([
         'category_id' => $this->category->id,
     ]);
-    
+
     // Create test orders with different statuses
     $this->orders = collect([
         Order::factory()->create([
@@ -40,7 +46,7 @@ beforeEach(function () {
             'created_at' => now()->subDays(3),
         ]),
     ]);
-    
+
     // Create order items for each order
     foreach ($this->orders as $order) {
         OrderItem::factory()->count(2)->create([
@@ -53,9 +59,9 @@ beforeEach(function () {
 describe('Orders Index Page', function () {
     it('displays all orders with customer and status information', function () {
         actingAs($this->user);
-        
+
         $page = visit('/orders');
-        
+
         $page->assertSee('Orders')
             ->assertSee('Order Management')
             ->assertSee($this->orders[0]->customer->name)
@@ -72,9 +78,9 @@ describe('Orders Index Page', function () {
 
     it('can filter orders by status', function () {
         actingAs($this->user);
-        
+
         $page = visit('/orders');
-        
+
         // Filter by completed status
         $page->selectValue('[data-testid="status-filter"]', 'completed')
             ->waitForText('$999.99')
@@ -82,7 +88,7 @@ describe('Orders Index Page', function () {
             ->assertDontSee('$1,599.98')
             ->assertDontSee('$249.99')
             ->assertNoJavascriptErrors();
-        
+
         // Filter by pending status
         $page->selectValue('[data-testid="status-filter"]', 'pending')
             ->waitForText('$1,599.98')
@@ -90,7 +96,7 @@ describe('Orders Index Page', function () {
             ->assertDontSee('$999.99')
             ->assertDontSee('$249.99')
             ->assertNoJavascriptErrors();
-        
+
         // Filter by refunded status
         $page->selectValue('[data-testid="status-filter"]', 'refunded')
             ->waitForText('$249.99')
@@ -102,9 +108,9 @@ describe('Orders Index Page', function () {
 
     it('can filter orders by date range', function () {
         actingAs($this->user);
-        
+
         $page = visit('/orders');
-        
+
         // Filter to today's orders
         $page->fill('[data-testid="date-from"]', now()->toDateString())
             ->fill('[data-testid="date-to"]', now()->toDateString())
@@ -118,9 +124,9 @@ describe('Orders Index Page', function () {
 
     it('can search orders by customer name or order ID', function () {
         actingAs($this->user);
-        
+
         $page = visit('/orders');
-        
+
         // Search by customer name
         $customerName = $this->orders[0]->customer->name;
         $page->fill('[data-testid="search-input"]', $customerName)
@@ -129,9 +135,9 @@ describe('Orders Index Page', function () {
             ->assertSee($customerName)
             ->assertSee('$999.99')
             ->assertNoJavascriptErrors();
-        
+
         // Search by order ID
-        $page->fill('[data-testid="search-input"]', '#' . $this->orders[1]->id)
+        $page->fill('[data-testid="search-input"]', '#'.$this->orders[1]->id)
             ->click('[data-testid="search-button"]')
             ->waitForText('$1,599.98')
             ->assertSee('$1,599.98')
@@ -140,9 +146,9 @@ describe('Orders Index Page', function () {
 
     it('can filter orders by payment method', function () {
         actingAs($this->user);
-        
+
         $page = visit('/orders');
-        
+
         // Filter by credit card
         $page->selectValue('[data-testid="payment-method-filter"]', 'credit_card')
             ->waitForText('$999.99')
@@ -150,7 +156,7 @@ describe('Orders Index Page', function () {
             ->assertSee('$249.99')
             ->assertDontSee('$1,599.98')
             ->assertNoJavascriptErrors();
-        
+
         // Filter by cash
         $page->selectValue('[data-testid="payment-method-filter"]', 'cash')
             ->waitForText('$1,599.98')
@@ -162,9 +168,9 @@ describe('Orders Index Page', function () {
 
     it('shows order statistics and totals', function () {
         actingAs($this->user);
-        
+
         $page = visit('/orders');
-        
+
         $page->assertSee('Total Orders')
             ->assertSee('Total Revenue')
             ->assertSee('Pending Orders')
@@ -177,9 +183,9 @@ describe('Orders Index Page', function () {
 
     it('can export orders to CSV', function () {
         actingAs($this->user);
-        
+
         $page = visit('/orders');
-        
+
         $page->click('[data-testid="export-orders"]')
             ->waitForDownload()
             ->assertNoJavascriptErrors();
@@ -189,11 +195,11 @@ describe('Orders Index Page', function () {
 describe('Order Details Page', function () {
     it('shows complete order information', function () {
         actingAs($this->user);
-        
+
         $order = $this->orders[0];
-        
+
         $page = visit("/orders/{$order->id}");
-        
+
         $page->assertSee('Order Details')
             ->assertSee("Order #{$order->id}")
             ->assertSee($order->customer->name)
@@ -207,33 +213,33 @@ describe('Order Details Page', function () {
 
     it('displays order items with product details', function () {
         actingAs($this->user);
-        
+
         $order = $this->orders[0];
-        
+
         $page = visit("/orders/{$order->id}");
-        
+
         $page->assertSee('Order Items')
             ->assertSee('Product')
             ->assertSee('Quantity')
             ->assertSee('Price')
             ->assertSee('Subtotal')
             ->assertNoJavascriptErrors();
-        
+
         // Check that order items are displayed
         foreach ($order->orderItems as $item) {
             $page->assertSee($item->product->name)
                 ->assertSee($item->quantity)
-                ->assertSee('$' . number_format($item->price, 2));
+                ->assertSee('$'.number_format($item->price, 2));
         }
     });
 
     it('shows order timeline and status history', function () {
         actingAs($this->user);
-        
+
         $order = $this->orders[0];
-        
+
         $page = visit("/orders/{$order->id}");
-        
+
         $page->assertSee('Order Timeline')
             ->assertSee('Order Created')
             ->assertSee('Payment Processed')
@@ -243,29 +249,29 @@ describe('Order Details Page', function () {
 
     it('can update order status', function () {
         actingAs($this->user);
-        
+
         $order = $this->orders[1]; // Pending order
-        
+
         $page = visit("/orders/{$order->id}");
-        
+
         $page->selectValue('[data-testid="status-update"]', 'completed')
             ->click('[data-testid="update-status"]')
             ->waitForText('Order status updated')
             ->assertSee('Order status updated')
             ->assertSee('Completed')
             ->assertNoJavascriptErrors();
-        
+
         // Verify status updated in database
         expect($order->fresh()->status)->toBe('completed');
     });
 
     it('can add notes to order', function () {
         actingAs($this->user);
-        
+
         $order = $this->orders[0];
-        
+
         $page = visit("/orders/{$order->id}");
-        
+
         $page->fill('[data-testid="order-notes"]', 'Customer requested expedited shipping')
             ->click('[data-testid="save-notes"]')
             ->waitForText('Notes saved successfully')
@@ -276,14 +282,14 @@ describe('Order Details Page', function () {
 
     it('can print order receipt', function () {
         actingAs($this->user);
-        
+
         $order = $this->orders[0];
-        
+
         $page = visit("/orders/{$order->id}");
-        
+
         $page->click('[data-testid="print-receipt"]')
             ->assertNoJavascriptErrors();
-        
+
         // Verify print dialog opens (in a real browser this would trigger print)
     });
 });
@@ -291,11 +297,11 @@ describe('Order Details Page', function () {
 describe('Order Refunds', function () {
     it('can initiate full refund for completed orders', function () {
         actingAs($this->user);
-        
+
         $order = $this->orders[0]; // Completed order
-        
+
         $page = visit("/orders/{$order->id}");
-        
+
         $page->click('[data-testid="refund-order"]')
             ->waitForText('Refund Order')
             ->assertSee('Refund Order')
@@ -307,18 +313,18 @@ describe('Order Refunds', function () {
             ->assertSee('Refund processed successfully')
             ->assertSee('Refunded')
             ->assertNoJavascriptErrors();
-        
+
         // Verify order status updated in database
         expect($order->fresh()->status)->toBe('refunded');
     });
 
     it('can process partial refunds', function () {
         actingAs($this->user);
-        
+
         $order = $this->orders[0];
-        
+
         $page = visit("/orders/{$order->id}");
-        
+
         $page->click('[data-testid="refund-order"]')
             ->waitForText('Refund Order')
             ->click('[data-testid="partial-refund-tab"]')
@@ -332,11 +338,11 @@ describe('Order Refunds', function () {
 
     it('validates refund amounts', function () {
         actingAs($this->user);
-        
+
         $order = $this->orders[0];
-        
+
         $page = visit("/orders/{$order->id}");
-        
+
         $page->click('[data-testid="refund-order"]')
             ->waitForText('Refund Order')
             ->click('[data-testid="partial-refund-tab"]')
@@ -349,11 +355,11 @@ describe('Order Refunds', function () {
 
     it('prevents refunds on already refunded orders', function () {
         actingAs($this->user);
-        
+
         $order = $this->orders[2]; // Already refunded order
-        
+
         $page = visit("/orders/{$order->id}");
-        
+
         $page->assertDontSee('Refund Order')
             ->assertSee('Refunded')
             ->assertNoJavascriptErrors();
@@ -363,9 +369,9 @@ describe('Order Refunds', function () {
 describe('Order Analytics', function () {
     it('displays order analytics dashboard', function () {
         actingAs($this->user);
-        
+
         $page = visit('/orders?view=analytics');
-        
+
         $page->assertSee('Order Analytics')
             ->assertSee('Sales Overview')
             ->assertSee('Top Products')
@@ -377,9 +383,9 @@ describe('Order Analytics', function () {
 
     it('can filter analytics by date range', function () {
         actingAs($this->user);
-        
+
         $page = visit('/orders?view=analytics');
-        
+
         $page->fill('[data-testid="analytics-date-from"]', now()->subWeek()->toDateString())
             ->fill('[data-testid="analytics-date-to"]', now()->toDateString())
             ->click('[data-testid="apply-analytics-filter"]')
@@ -391,17 +397,17 @@ describe('Order Analytics', function () {
 describe('Mobile Order Management', function () {
     it('works correctly on mobile devices', function () {
         actingAs($this->user);
-        
+
         $page = visit('/orders')
             ->resize(375, 667); // iPhone size
-        
+
         $page->assertSee('Orders')
             ->assertElementExists('[data-testid="orders-table"]')
             ->assertNoJavascriptErrors();
-        
+
         // Test mobile-specific interactions
         $order = $this->orders[0];
-        $page->click('[data-testid="order-' . $order->id . '"]')
+        $page->click('[data-testid="order-'.$order->id.'"]')
             ->waitForPath("/orders/{$order->id}")
             ->assertSee('Order Details')
             ->assertNoJavascriptErrors();

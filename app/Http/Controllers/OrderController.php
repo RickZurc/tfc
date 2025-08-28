@@ -36,12 +36,12 @@ class OrderController extends Controller
             $searchTerm = $request->search;
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('order_number', 'like', '%'.$searchTerm.'%')
-                  ->orWhereHas('customer', function ($customerQuery) use ($searchTerm) {
-                      $customerQuery->where('name', 'like', '%'.$searchTerm.'%');
-                  })
-                  ->orWhereHas('user', function ($userQuery) use ($searchTerm) {
-                      $userQuery->where('name', 'like', '%'.$searchTerm.'%');
-                  });
+                    ->orWhereHas('customer', function ($customerQuery) use ($searchTerm) {
+                        $customerQuery->where('name', 'like', '%'.$searchTerm.'%');
+                    })
+                    ->orWhereHas('user', function ($userQuery) use ($searchTerm) {
+                        $userQuery->where('name', 'like', '%'.$searchTerm.'%');
+                    });
             });
         }
 
@@ -90,13 +90,13 @@ class OrderController extends Controller
                 auth()->id()
             );
 
-            if (!$success) {
+            if (! $success) {
                 return back()->with('error', 'Unable to process refund. Please check order status and refund amount.');
             }
 
             return back()->with('success', "Order {$order->order_number} has been successfully refunded.");
         } catch (\Exception $e) {
-            return back()->with('error', 'An error occurred while processing the refund: ' . $e->getMessage());
+            return back()->with('error', 'An error occurred while processing the refund: '.$e->getMessage());
         }
     }
 }

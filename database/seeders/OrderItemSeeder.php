@@ -13,9 +13,10 @@ class OrderItemSeeder extends Seeder
     {
         $orders = \App\Models\Order::all();
         $products = \App\Models\Product::all();
-        
+
         if ($orders->isEmpty() || $products->isEmpty()) {
             $this->command->warn('No orders or products found. Please run OrderSeeder and ProductSeeder first.');
+
             return;
         }
 
@@ -33,7 +34,7 @@ class OrderItemSeeder extends Seeder
                 'tax_rate' => 10.00,
                 'tax_amount' => 9.00,
             ],
-            
+
             // Order 2 (ORD-2025-002) - Phone Charger + Bottled Water
             [
                 'order_id' => $orders->where('order_number', 'ORD-2025-002')->first()->id,
@@ -57,7 +58,7 @@ class OrderItemSeeder extends Seeder
                 'tax_rate' => 0.00,
                 'tax_amount' => 0.00,
             ],
-            
+
             // Order 3 (ORD-2025-003) - Multiple snacks
             [
                 'order_id' => $orders->where('order_number', 'ORD-2025-003')->first()->id,
@@ -103,7 +104,7 @@ class OrderItemSeeder extends Seeder
                 'tax_rate' => 0.00,
                 'tax_amount' => 0.00,
             ],
-            
+
             // Order 4 (ORD-2025-004) - Pending order
             [
                 'order_id' => $orders->where('order_number', 'ORD-2025-004')->first()->id,
@@ -127,7 +128,7 @@ class OrderItemSeeder extends Seeder
                 'tax_rate' => 5.00,
                 'tax_amount' => 0.20,
             ],
-            
+
             // Order 5 (ORD-2025-005) - Refunded order
             [
                 'order_id' => $orders->where('order_number', 'ORD-2025-005')->first()->id,

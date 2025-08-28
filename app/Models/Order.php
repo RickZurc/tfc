@@ -110,7 +110,7 @@ class Order extends Model
 
     public function processRefund(float $refundAmount, string $reason, int $refundedByUserId): bool
     {
-        if (!$this->canBeRefunded()) {
+        if (! $this->canBeRefunded()) {
             return false;
         }
 

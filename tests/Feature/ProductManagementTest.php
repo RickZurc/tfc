@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\User;
-use App\Models\Product;
 use App\Models\Category;
+use App\Models\Product;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -15,7 +15,7 @@ describe('Product Management', function () {
 
     it('can create a product with valid data', function () {
         $category = Category::factory()->create();
-        
+
         $productData = [
             'name' => 'Test Product',
             'description' => 'A great test product',
@@ -48,7 +48,7 @@ describe('Product Management', function () {
 
     it('validates required fields', function (string $field) {
         $category = Category::factory()->create();
-        
+
         $productData = [
             'name' => 'Test Product',
             'category_id' => $category->id,

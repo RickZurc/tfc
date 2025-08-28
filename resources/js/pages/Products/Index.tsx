@@ -1,65 +1,54 @@
-import { useState } from 'react'
-import { Head, Link, router } from '@inertiajs/react'
-import AppLayout from '@/layouts/app-layout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Checkbox } from '@/components/ui/checkbox'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { type BreadcrumbItem } from '@/types'
-import { 
-    Plus, 
-    Search, 
-    MoreHorizontal, 
-    Edit, 
-    Trash2, 
-    Eye, 
-    Power,
-    Package,
-    Filter,
-    X
-} from 'lucide-react'
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { Head, Link, router } from '@inertiajs/react';
+import { Edit, Eye, Filter, MoreHorizontal, Package, Plus, Power, Search, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
 
 interface Category {
-    id: number
-    name: string
-    color: string
+    id: number;
+    name: string;
+    color: string;
 }
 
 interface Product {
-    id: number
-    name: string
-    sku: string
-    price: string
-    stock_quantity: number | null
-    min_stock_level: number | null
-    track_stock: boolean
-    is_active: boolean
-    category: Category
-    created_at: string
+    id: number;
+    name: string;
+    sku: string;
+    price: string;
+    stock_quantity: number | null;
+    min_stock_level: number | null;
+    track_stock: boolean;
+    is_active: boolean;
+    category: Category;
+    created_at: string;
 }
 
 interface Props {
     products: {
-        data: Product[]
-        links: any[]
-        current_page: number
-        last_page: number
-        per_page: number
-        total: number
-    }
-    categories: Category[]
+        data: Product[];
+        links: any[];
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+    };
+    categories: Category[];
     filters: {
-        search?: string
-        category?: string
-        status?: string
-        stock?: string
-        sort?: string
-        direction?: string
-    }
+        search?: string;
+        category?: string;
+        status?: string;
+        stock?: string;
+        sort?: string;
+        direction?: string;
+    };
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -67,162 +56,168 @@ const breadcrumbs: BreadcrumbItem[] = [
         title: 'Products',
         href: '/products',
     },
-]
+];
 
 export default function ProductsIndex({ products, categories, filters }: Props) {
-    const [selectedProducts, setSelectedProducts] = useState<number[]>([])
-    const [searchTerm, setSearchTerm] = useState(filters.search || '')
-    const [categoryFilter, setCategoryFilter] = useState(filters.category || 'all')
-    const [statusFilter, setStatusFilter] = useState(filters.status || 'all')
-    const [stockFilter, setStockFilter] = useState(filters.stock || 'all')
-    
+    const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
+    const [searchTerm, setSearchTerm] = useState(filters.search || '');
+    const [categoryFilter, setCategoryFilter] = useState(filters.category || 'all');
+    const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
+    const [stockFilter, setStockFilter] = useState(filters.stock || 'all');
+
     // Dialog states
     const [deleteDialog, setDeleteDialog] = useState<{
-        open: boolean
-        type: 'single' | 'bulk'
-        product?: Product
-        count?: number
+        open: boolean;
+        type: 'single' | 'bulk';
+        product?: Product;
+        count?: number;
     }>({
         open: false,
-        type: 'single'
-    })
+        type: 'single',
+    });
 
     const handleSearch = () => {
-        router.get(route('products.index'), {
-            search: searchTerm,
-            category: categoryFilter === 'all' ? '' : categoryFilter,
-            status: statusFilter === 'all' ? '' : statusFilter,
-            stock: stockFilter === 'all' ? '' : stockFilter,
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        })
-    }
+        router.get(
+            route('products.index'),
+            {
+                search: searchTerm,
+                category: categoryFilter === 'all' ? '' : categoryFilter,
+                status: statusFilter === 'all' ? '' : statusFilter,
+                stock: stockFilter === 'all' ? '' : stockFilter,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
+    };
 
     const clearFilters = () => {
-        setSearchTerm('')
-        setCategoryFilter('all')
-        setStatusFilter('all')
-        setStockFilter('all')
-        router.get(route('products.index'))
-    }
+        setSearchTerm('');
+        setCategoryFilter('all');
+        setStatusFilter('all');
+        setStockFilter('all');
+        router.get(route('products.index'));
+    };
 
     const toggleSelectAll = () => {
         if (selectedProducts.length === products.data.length) {
-            setSelectedProducts([])
+            setSelectedProducts([]);
         } else {
-            setSelectedProducts(products.data.map(p => p.id))
+            setSelectedProducts(products.data.map((p) => p.id));
         }
-    }
+    };
 
     const toggleSelectProduct = (productId: number) => {
-        setSelectedProducts(prev => 
-            prev.includes(productId)
-                ? prev.filter(id => id !== productId)
-                : [...prev, productId]
-        )
-    }
+        setSelectedProducts((prev) => (prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]));
+    };
 
     const handleBulkAction = (action: string) => {
-        if (selectedProducts.length === 0) return
+        if (selectedProducts.length === 0) return;
 
         if (action === 'delete') {
             setDeleteDialog({
                 open: true,
                 type: 'bulk',
-                count: selectedProducts.length
-            })
-            return
+                count: selectedProducts.length,
+            });
+            return;
         }
 
-        router.post(route('products.bulk-action'), {
-            action,
-            products: selectedProducts,
-        }, {
-            onSuccess: () => setSelectedProducts([]),
-        })
-    }
+        router.post(
+            route('products.bulk-action'),
+            {
+                action,
+                products: selectedProducts,
+            },
+            {
+                onSuccess: () => setSelectedProducts([]),
+            },
+        );
+    };
 
     const toggleProductStatus = (product: Product) => {
-        router.patch(route('products.toggle-status', product.id))
-    }
+        router.patch(route('products.toggle-status', product.id));
+    };
 
     const deleteProduct = (product: Product) => {
         setDeleteDialog({
             open: true,
             type: 'single',
-            product: product
-        })
-    }
+            product: product,
+        });
+    };
 
     const confirmDelete = () => {
         console.log('confirmDelete called', deleteDialog);
-        
+
         if (deleteDialog.type === 'single' && deleteDialog.product) {
             console.log('Single delete for product:', deleteDialog.product.id);
             router.delete(route('products.destroy', deleteDialog.product.id), {
                 onSuccess: () => {
                     console.log('Single delete success');
-                    setDeleteDialog({ open: false, type: 'single' })
+                    setDeleteDialog({ open: false, type: 'single' });
                 },
                 onError: (errors) => {
                     console.error('Single delete error:', errors);
-                }
-            })
+                },
+            });
         } else if (deleteDialog.type === 'bulk') {
             console.log('Bulk delete for products:', selectedProducts);
-            router.post(route('products.bulk-action'), {
-                action: 'delete',
-                products: selectedProducts,
-            }, {
-                onSuccess: () => {
-                    console.log('Bulk delete success');
-                    setSelectedProducts([])
-                    setDeleteDialog({ open: false, type: 'bulk' })
+            router.post(
+                route('products.bulk-action'),
+                {
+                    action: 'delete',
+                    products: selectedProducts,
                 },
-                onError: (errors) => {
-                    console.error('Bulk delete error:', errors);
-                }
-            })
+                {
+                    onSuccess: () => {
+                        console.log('Bulk delete success');
+                        setSelectedProducts([]);
+                        setDeleteDialog({ open: false, type: 'bulk' });
+                    },
+                    onError: (errors) => {
+                        console.error('Bulk delete error:', errors);
+                    },
+                },
+            );
         }
-    }
+    };
 
     const formatCurrency = (amount: string) => {
-        const num = parseFloat(amount || '0')
+        const num = parseFloat(amount || '0');
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD'
-        }).format(num)
-    }
+            currency: 'USD',
+        }).format(num);
+    };
 
     const getStockStatus = (product: Product) => {
-        if (!product.track_stock) return null
-        
-        if (product.stock_quantity === 0) {
-            return { status: 'out', label: 'Out of Stock', variant: 'destructive' as const }
-        }
-        
-        if (product.min_stock_level && product.stock_quantity && product.stock_quantity <= product.min_stock_level) {
-            return { status: 'low', label: 'Low Stock', variant: 'secondary' as const }
-        }
-        
-        return { status: 'good', label: 'In Stock', variant: 'default' as const }
-    }
+        if (!product.track_stock) return null;
 
-    const hasActiveFilters = searchTerm || categoryFilter !== 'all' || statusFilter !== 'all' || stockFilter !== 'all'
+        if (product.stock_quantity === 0) {
+            return { status: 'out', label: 'Out of Stock', variant: 'destructive' as const };
+        }
+
+        if (product.min_stock_level && product.stock_quantity && product.stock_quantity <= product.min_stock_level) {
+            return { status: 'low', label: 'Low Stock', variant: 'secondary' as const };
+        }
+
+        return { status: 'good', label: 'In Stock', variant: 'default' as const };
+    };
+
+    const hasActiveFilters = searchTerm || categoryFilter !== 'all' || statusFilter !== 'all' || stockFilter !== 'all';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Products" />
-            
-            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 overflow-x-auto">
+
+            <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4">
                 {/* Header */}
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-                        <p className="text-muted-foreground">
-                            Manage your product catalog and inventory
-                        </p>
+                        <p className="text-muted-foreground">Manage your product catalog and inventory</p>
                     </div>
                     <Link href={route('products.create')}>
                         <Button className="flex items-center gap-2">
@@ -241,9 +236,7 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{products.total}</div>
-                            <p className="text-xs text-muted-foreground">
-                                Products in catalog
-                            </p>
+                            <p className="text-xs text-muted-foreground">Products in catalog</p>
                         </CardContent>
                     </Card>
 
@@ -253,12 +246,8 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                             <Power className="h-4 w-4 text-green-600" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-green-600">
-                                {products.data.filter(p => p.is_active).length}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Available for sale
-                            </p>
+                            <div className="text-2xl font-bold text-green-600">{products.data.filter((p) => p.is_active).length}</div>
+                            <p className="text-xs text-muted-foreground">Available for sale</p>
                         </CardContent>
                     </Card>
 
@@ -269,14 +258,14 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-orange-600">
-                                {products.data.filter(p => {
-                                    const stock = getStockStatus(p)
-                                    return stock?.status === 'low' || stock?.status === 'out'
-                                }).length}
+                                {
+                                    products.data.filter((p) => {
+                                        const stock = getStockStatus(p);
+                                        return stock?.status === 'low' || stock?.status === 'out';
+                                    }).length
+                                }
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                                Need restocking
-                            </p>
+                            <p className="text-xs text-muted-foreground">Need restocking</p>
                         </CardContent>
                     </Card>
 
@@ -287,9 +276,7 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{categories.length}</div>
-                            <p className="text-xs text-muted-foreground">
-                                Product categories
-                            </p>
+                            <p className="text-xs text-muted-foreground">Product categories</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -306,7 +293,7 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-6">
                             <div className="lg:col-span-2">
                                 <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
                                     <Input
                                         placeholder="Search products..."
                                         value={searchTerm}
@@ -316,14 +303,14 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                                     />
                                 </div>
                             </div>
-                            
+
                             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="All Categories" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Categories</SelectItem>
-                                    {categories.map(category => (
+                                    {categories.map((category) => (
                                         <SelectItem key={category.id} value={category.id.toString()}>
                                             {category.name}
                                         </SelectItem>
@@ -358,7 +345,7 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                                 Apply Filters
                             </Button>
                         </div>
-                        
+
                         {hasActiveFilters && (
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-muted-foreground">Active filters:</span>
@@ -370,7 +357,7 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                                 )}
                                 {categoryFilter !== 'all' && (
                                     <Badge variant="secondary" className="flex items-center gap-1">
-                                        Category: {categories.find(c => c.id.toString() === categoryFilter)?.name}
+                                        Category: {categories.find((c) => c.id.toString() === categoryFilter)?.name}
                                         <X className="h-3 w-3 cursor-pointer" onClick={() => setCategoryFilter('all')} />
                                     </Badge>
                                 )}
@@ -399,29 +386,15 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                     <Card>
                         <CardContent className="py-4">
                             <div className="flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">
-                                    {selectedProducts.length} product(s) selected
-                                </span>
+                                <span className="text-sm text-muted-foreground">{selectedProducts.length} product(s) selected</span>
                                 <div className="flex gap-2">
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        onClick={() => handleBulkAction('activate')}
-                                    >
+                                    <Button variant="outline" size="sm" onClick={() => handleBulkAction('activate')}>
                                         Activate
                                     </Button>
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        onClick={() => handleBulkAction('deactivate')}
-                                    >
+                                    <Button variant="outline" size="sm" onClick={() => handleBulkAction('deactivate')}>
                                         Deactivate
                                     </Button>
-                                    <Button 
-                                        variant="destructive" 
-                                        size="sm" 
-                                        onClick={() => handleBulkAction('delete')}
-                                    >
+                                    <Button variant="destructive" size="sm" onClick={() => handleBulkAction('delete')}>
                                         Delete
                                     </Button>
                                 </div>
@@ -440,24 +413,24 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b">
-                                        <th className="text-left p-2">
+                                        <th className="p-2 text-left">
                                             <Checkbox
                                                 checked={selectedProducts.length === products.data.length && products.data.length > 0}
                                                 onCheckedChange={toggleSelectAll}
                                             />
                                         </th>
-                                        <th className="text-left p-2">Product</th>
-                                        <th className="text-left p-2">SKU</th>
-                                        <th className="text-left p-2">Category</th>
-                                        <th className="text-left p-2">Price</th>
-                                        <th className="text-left p-2">Stock</th>
-                                        <th className="text-left p-2">Status</th>
-                                        <th className="text-left p-2">Actions</th>
+                                        <th className="p-2 text-left">Product</th>
+                                        <th className="p-2 text-left">SKU</th>
+                                        <th className="p-2 text-left">Category</th>
+                                        <th className="p-2 text-left">Price</th>
+                                        <th className="p-2 text-left">Stock</th>
+                                        <th className="p-2 text-left">Status</th>
+                                        <th className="p-2 text-left">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {products.data.map((product) => {
-                                        const stockStatus = getStockStatus(product)
+                                        const stockStatus = getStockStatus(product);
                                         return (
                                             <tr key={product.id} className="border-b hover:bg-muted/50">
                                                 <td className="p-2">
@@ -475,13 +448,11 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                                                     </div>
                                                 </td>
                                                 <td className="p-2">
-                                                    <code className="text-sm bg-muted px-2 py-1 rounded">
-                                                        {product.sku}
-                                                    </code>
+                                                    <code className="rounded bg-muted px-2 py-1 text-sm">{product.sku}</code>
                                                 </td>
                                                 <td className="p-2">
-                                                    <Badge 
-                                                        variant="outline" 
+                                                    <Badge
+                                                        variant="outline"
                                                         style={{ borderColor: product.category.color, color: product.category.color }}
                                                     >
                                                         {product.category.name}
@@ -506,7 +477,7 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                                                 </td>
                                                 <td className="p-2">
                                                     <Button
-                                                        variant={product.is_active ? "default" : "secondary"}
+                                                        variant={product.is_active ? 'default' : 'secondary'}
                                                         size="sm"
                                                         onClick={() => toggleProductStatus(product)}
                                                         className="flex items-center gap-2"
@@ -525,47 +496,41 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                                                         <DropdownMenuContent align="end">
                                                             <DropdownMenuItem asChild>
                                                                 <Link href={route('products.show', product.id)}>
-                                                                    <Eye className="h-4 w-4 mr-2" />
+                                                                    <Eye className="mr-2 h-4 w-4" />
                                                                     View
                                                                 </Link>
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem asChild>
                                                                 <Link href={route('products.edit', product.id)}>
-                                                                    <Edit className="h-4 w-4 mr-2" />
+                                                                    <Edit className="mr-2 h-4 w-4" />
                                                                     Edit
                                                                 </Link>
                                                             </DropdownMenuItem>
-                                                            <DropdownMenuItem 
-                                                                onClick={() => deleteProduct(product)}
-                                                                className="text-destructive"
-                                                            >
-                                                                <Trash2 className="h-4 w-4 mr-2" />
+                                                            <DropdownMenuItem onClick={() => deleteProduct(product)} className="text-destructive">
+                                                                <Trash2 className="mr-2 h-4 w-4" />
                                                                 Delete
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </td>
                                             </tr>
-                                        )
+                                        );
                                     })}
                                 </tbody>
                             </table>
                         </div>
 
                         {products.data.length === 0 && (
-                            <div className="text-center py-8">
-                                <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                                <h3 className="text-lg font-medium mb-2">No products found</h3>
-                                <p className="text-muted-foreground mb-4">
-                                    {hasActiveFilters 
-                                        ? 'Try adjusting your filters or search terms'
-                                        : 'Get started by adding your first product'
-                                    }
+                            <div className="py-8 text-center">
+                                <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                                <h3 className="mb-2 text-lg font-medium">No products found</h3>
+                                <p className="mb-4 text-muted-foreground">
+                                    {hasActiveFilters ? 'Try adjusting your filters or search terms' : 'Get started by adding your first product'}
                                 </p>
                                 {!hasActiveFilters && (
                                     <Link href={route('products.create')}>
                                         <Button>
-                                            <Plus className="h-4 w-4 mr-2" />
+                                            <Plus className="mr-2 h-4 w-4" />
                                             Add Product
                                         </Button>
                                     </Link>
@@ -582,7 +547,7 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                             {products.links.map((link, index) => (
                                 <Button
                                     key={index}
-                                    variant={link.active ? "default" : "outline"}
+                                    variant={link.active ? 'default' : 'outline'}
                                     size="sm"
                                     onClick={() => link.url && router.get(link.url)}
                                     disabled={!link.url}
@@ -598,9 +563,7 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
             <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>
-                            {deleteDialog.type === 'single' ? 'Delete Product' : 'Delete Products'}
-                        </DialogTitle>
+                        <DialogTitle>{deleteDialog.type === 'single' ? 'Delete Product' : 'Delete Products'}</DialogTitle>
                         <DialogDescription>
                             {deleteDialog.type === 'single' && deleteDialog.product ? (
                                 <>
@@ -618,22 +581,16 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex gap-2">
-                        <Button 
-                            variant="outline" 
-                            onClick={() => setDeleteDialog({ open: false, type: 'single' })}
-                        >
+                        <Button variant="outline" onClick={() => setDeleteDialog({ open: false, type: 'single' })}>
                             Cancel
                         </Button>
-                        <Button 
-                            variant="destructive" 
-                            onClick={confirmDelete}
-                        >
-                            <Trash2 className="h-4 w-4 mr-2" />
+                        <Button variant="destructive" onClick={confirmDelete}>
+                            <Trash2 className="mr-2 h-4 w-4" />
                             Delete {deleteDialog.type === 'bulk' ? `${deleteDialog.count} Products` : 'Product'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
         </AppLayout>
-    )
+    );
 }

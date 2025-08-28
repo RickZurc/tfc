@@ -64,7 +64,7 @@ class ProductSeeder extends Seeder
                 'track_stock' => true,
                 'tax_rate' => 10.00,
             ],
-            
+
             // Beverages
             [
                 'category_id' => 2,
@@ -134,7 +134,7 @@ class ProductSeeder extends Seeder
                 'track_stock' => false,
                 'tax_rate' => 0.00,
             ],
-            
+
             // Snacks
             [
                 'category_id' => 3,
@@ -187,7 +187,7 @@ class ProductSeeder extends Seeder
                 'track_stock' => true,
                 'tax_rate' => 5.00,
             ],
-            
+
             // Personal Care
             [
                 'category_id' => 4,
@@ -223,7 +223,7 @@ class ProductSeeder extends Seeder
                 'track_stock' => true,
                 'tax_rate' => 0.00,
             ],
-            
+
             // Office Supplies
             [
                 'category_id' => 5,

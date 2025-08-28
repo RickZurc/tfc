@@ -1,50 +1,50 @@
-import { Head, Link, router, usePage } from '@inertiajs/react'
-import AppLayout from '@/layouts/app-layout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { type BreadcrumbItem } from '@/types'
-import { ArrowLeft, Edit, Trash2, Power, Package, DollarSign, TrendingUp, Tag } from 'lucide-react'
-import { useState } from 'react'
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { ArrowLeft, DollarSign, Edit, Package, Power, Trash2, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
 
 interface Category {
-    id: number
-    name: string
-    slug: string
-    description: string | null
-    color: string
-    icon: string | null
-    is_active: boolean
-    created_at: string
-    updated_at: string
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+    color: string;
+    icon: string | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
     products: Array<{
-        id: number
-        name: string
-        sku: string
-        price: string
-        is_active: boolean
+        id: number;
+        name: string;
+        sku: string;
+        price: string;
+        is_active: boolean;
         category: {
-            id: number
-            name: string
-        }
-    }>
+            id: number;
+            name: string;
+        };
+    }>;
 }
 
 interface Stats {
-    total_products: number
-    active_products: number
-    total_sales: number
+    total_products: number;
+    active_products: number;
+    total_sales: number;
 }
 
 interface PageProps extends Record<string, unknown> {
-    category: Category
-    stats: Stats
+    category: Category;
+    stats: Stats;
 }
 
 export default function ShowCategory() {
-    const { category, stats } = usePage<PageProps>().props
-    const [deleteDialog, setDeleteDialog] = useState(false)
+    const { category, stats } = usePage<PageProps>().props;
+    const [deleteDialog, setDeleteDialog] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -55,37 +55,41 @@ export default function ShowCategory() {
             title: category.name,
             href: `/categories/${category.id}`,
         },
-    ]
+    ];
 
     const handleToggleStatus = () => {
-        router.patch(`/categories/${category.id}/toggle-status`, {}, {
-            preserveState: true,
-        })
-    }
+        router.patch(
+            `/categories/${category.id}/toggle-status`,
+            {},
+            {
+                preserveState: true,
+            },
+        );
+    };
 
     const handleDelete = () => {
         router.delete(`/categories/${category.id}`, {
             preserveState: true,
-        })
-        setDeleteDialog(false)
-    }
+        });
+        setDeleteDialog(false);
+    };
 
     const formatCurrency = (value: any): string => {
         const num = typeof value === 'string' ? parseFloat(value) : value;
         return isNaN(num) || num === null || num === undefined ? '0.00' : num.toFixed(2);
-    }
+    };
 
     const formatDate = (dateString: string): string => {
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
-        })
-    }
+        });
+    };
 
     const getStatusVariant = (isActive: boolean) => {
-        return isActive ? 'default' : 'secondary'
-    }
+        return isActive ? 'default' : 'secondary';
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -93,54 +97,43 @@ export default function ShowCategory() {
 
             <div className="p-6">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="mb-6 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link href="/categories">
                             <Button variant="outline" size="sm">
-                                <ArrowLeft className="h-4 w-4 mr-2" />
+                                <ArrowLeft className="mr-2 h-4 w-4" />
                                 Back
                             </Button>
                         </Link>
                         <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <div 
-                                    className="w-6 h-6 rounded-full border"
-                                    style={{ backgroundColor: category.color }}
-                                />
+                            <div className="mb-2 flex items-center gap-3">
+                                <div className="h-6 w-6 rounded-full border" style={{ backgroundColor: category.color }} />
                                 <h1 className="text-3xl font-bold tracking-tight">{category.name}</h1>
-                                <Badge variant={getStatusVariant(category.is_active)}>
-                                    {category.is_active ? 'Active' : 'Inactive'}
-                                </Badge>
+                                <Badge variant={getStatusVariant(category.is_active)}>{category.is_active ? 'Active' : 'Inactive'}</Badge>
                             </div>
-                            {category.description && (
-                                <p className="text-muted-foreground">{category.description}</p>
-                            )}
+                            {category.description && <p className="text-muted-foreground">{category.description}</p>}
                         </div>
                     </div>
                     <div className="flex gap-2">
                         <Link href={`/categories/${category.id}/edit`}>
                             <Button variant="outline">
-                                <Edit className="h-4 w-4 mr-2" />
+                                <Edit className="mr-2 h-4 w-4" />
                                 Edit
                             </Button>
                         </Link>
                         <Button variant="outline" onClick={handleToggleStatus}>
-                            <Power className="h-4 w-4 mr-2" />
+                            <Power className="mr-2 h-4 w-4" />
                             {category.is_active ? 'Deactivate' : 'Activate'}
                         </Button>
-                        <Button 
-                            variant="destructive" 
-                            onClick={() => setDeleteDialog(true)}
-                            disabled={stats.total_products > 0}
-                        >
-                            <Trash2 className="h-4 w-4 mr-2" />
+                        <Button variant="destructive" onClick={() => setDeleteDialog(true)} disabled={stats.total_products > 0}>
+                            <Trash2 className="mr-2 h-4 w-4" />
                             Delete
                         </Button>
                     </div>
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
                     <Card>
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
@@ -178,7 +171,7 @@ export default function ShowCategory() {
                     </Card>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     {/* Category Details */}
                     <Card>
                         <CardHeader>
@@ -192,16 +185,13 @@ export default function ShowCategory() {
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Slug</p>
-                                    <p className="text-sm font-mono">{category.slug}</p>
+                                    <p className="font-mono text-sm">{category.slug}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Color</p>
                                     <div className="flex items-center gap-2">
-                                        <div 
-                                            className="w-4 h-4 rounded border"
-                                            style={{ backgroundColor: category.color }}
-                                        />
-                                        <p className="text-sm font-mono">{category.color}</p>
+                                        <div className="h-4 w-4 rounded border" style={{ backgroundColor: category.color }} />
+                                        <p className="font-mono text-sm">{category.color}</p>
                                     </div>
                                 </div>
                                 <div>
@@ -240,8 +230,8 @@ export default function ShowCategory() {
                         </CardHeader>
                         <CardContent>
                             {category.products.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <Package className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
+                                <div className="py-8 text-center">
+                                    <Package className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
                                     <p className="text-muted-foreground">No products in this category</p>
                                     <Link href="/products/create">
                                         <Button variant="outline" className="mt-2" size="sm">
@@ -252,7 +242,7 @@ export default function ShowCategory() {
                             ) : (
                                 <div className="space-y-3">
                                     {category.products.map((product) => (
-                                        <div key={product.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                        <div key={product.id} className="flex items-center justify-between rounded-lg border p-3">
                                             <div>
                                                 <p className="font-medium">{product.name}</p>
                                                 <p className="text-sm text-muted-foreground">
@@ -286,8 +276,9 @@ export default function ShowCategory() {
                         <DialogDescription>
                             Are you sure you want to delete "{category.name}"?
                             {stats.total_products > 0 && (
-                                <span className="text-destructive font-medium">
-                                    {' '}This category has {stats.total_products} products and cannot be deleted.
+                                <span className="font-medium text-destructive">
+                                    {' '}
+                                    This category has {stats.total_products} products and cannot be deleted.
                                 </span>
                             )}
                             {stats.total_products === 0 && ' This action cannot be undone.'}
@@ -306,5 +297,5 @@ export default function ShowCategory() {
                 </DialogContent>
             </Dialog>
         </AppLayout>
-    )
+    );
 }

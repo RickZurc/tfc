@@ -1,43 +1,42 @@
-import { useState } from 'react'
-import { Head, Link, router } from '@inertiajs/react'
-import AppLayout from '@/layouts/app-layout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Checkbox } from '@/components/ui/checkbox'
-import { type BreadcrumbItem } from '@/types'
-import { ArrowLeft, Save, Package, DollarSign, Barcode, Settings } from 'lucide-react'
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { Head, Link, router } from '@inertiajs/react';
+import { ArrowLeft, Barcode, DollarSign, Package, Save, Settings } from 'lucide-react';
+import { useState } from 'react';
 
 interface Category {
-    id: number
-    name: string
-    color: string
+    id: number;
+    name: string;
+    color: string;
 }
 
 interface Props {
-    categories: Category[]
+    categories: Category[];
 }
 
 interface FormData {
-    name: string
-    category_id: string
-    price: string
-    cost_price: string
-    sku: string
-    barcode: string
-    description: string
-    unit: string
-    weight: string
-    dimensions: string
-    track_stock: boolean
-    stock_quantity: string
-    min_stock_level: string
-    max_stock_level: string
-    is_active: boolean
-    tax_rate: string
+    name: string;
+    category_id: string;
+    price: string;
+    cost_price: string;
+    sku: string;
+    barcode: string;
+    description: string;
+    unit: string;
+    weight: string;
+    dimensions: string;
+    track_stock: boolean;
+    stock_quantity: string;
+    min_stock_level: string;
+    max_stock_level: string;
+    is_active: boolean;
+    tax_rate: string;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -49,7 +48,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         title: 'Create Product',
         href: '/products/create',
     },
-]
+];
 
 export default function ProductCreate({ categories }: Props) {
     const [formData, setFormData] = useState<FormData>({
@@ -68,31 +67,31 @@ export default function ProductCreate({ categories }: Props) {
         min_stock_level: '',
         max_stock_level: '',
         is_active: true,
-        tax_rate: '0'
-    })
+        tax_rate: '0',
+    });
 
-    const [errors, setErrors] = useState<Record<string, string>>({})
-    const [processing, setProcessing] = useState(false)
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [processing, setProcessing] = useState(false);
 
     const handleChange = (field: keyof FormData, value: string | boolean) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [field]: value
-        }))
-        
+            [field]: value,
+        }));
+
         // Clear error when user starts typing
         if (errors[field]) {
-            setErrors(prev => {
-                const newErrors = { ...prev }
-                delete newErrors[field]
-                return newErrors
-            })
+            setErrors((prev) => {
+                const newErrors = { ...prev };
+                delete newErrors[field];
+                return newErrors;
+            });
         }
-    }
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        setProcessing(true)
+        e.preventDefault();
+        setProcessing(true);
 
         // Convert form data to the format expected by Laravel
         const submitData = {
@@ -105,19 +104,19 @@ export default function ProductCreate({ categories }: Props) {
             min_stock_level: formData.track_stock && formData.min_stock_level ? parseInt(formData.min_stock_level) : null,
             max_stock_level: formData.track_stock && formData.max_stock_level ? parseInt(formData.max_stock_level) : null,
             tax_rate: formData.tax_rate ? parseFloat(formData.tax_rate) : 0,
-        }
+        };
 
         router.post(route('products.store'), submitData, {
             onFinish: () => setProcessing(false),
             onError: (errors) => setErrors(errors),
-        })
-    }
+        });
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Create Product" />
 
-            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 overflow-x-auto">
+            <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4">
                 {/* Header */}
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
@@ -129,9 +128,7 @@ export default function ProductCreate({ categories }: Props) {
                         </Link>
                         <div>
                             <h1 className="text-3xl font-bold tracking-tight">Create Product</h1>
-                            <p className="text-muted-foreground">
-                                Add a new product to your catalog
-                            </p>
+                            <p className="text-muted-foreground">Add a new product to your catalog</p>
                         </div>
                     </div>
                 </div>
@@ -157,9 +154,7 @@ export default function ProductCreate({ categories }: Props) {
                                             placeholder="Enter product name"
                                             className={errors.name ? 'border-destructive' : ''}
                                         />
-                                        {errors.name && (
-                                            <p className="text-sm text-destructive mt-1">{errors.name}</p>
-                                        )}
+                                        {errors.name && <p className="mt-1 text-sm text-destructive">{errors.name}</p>}
                                     </div>
 
                                     <div>
@@ -172,19 +167,14 @@ export default function ProductCreate({ categories }: Props) {
                                                 {categories.map((category) => (
                                                     <SelectItem key={category.id} value={category.id.toString()}>
                                                         <div className="flex items-center gap-2">
-                                                            <div 
-                                                                className="w-3 h-3 rounded-full" 
-                                                                style={{ backgroundColor: category.color }}
-                                                            />
+                                                            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: category.color }} />
                                                             {category.name}
                                                         </div>
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        {errors.category_id && (
-                                            <p className="text-sm text-destructive mt-1">{errors.category_id}</p>
-                                        )}
+                                        {errors.category_id && <p className="mt-1 text-sm text-destructive">{errors.category_id}</p>}
                                     </div>
 
                                     <div>
@@ -194,11 +184,9 @@ export default function ProductCreate({ categories }: Props) {
                                             value={formData.description}
                                             onChange={(e) => handleChange('description', e.target.value)}
                                             placeholder="Enter product description"
-                                            className="w-full min-h-[80px] px-3 py-2 border border-input rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                                            className="min-h-[80px] w-full resize-none rounded-md border border-input px-3 py-2 focus:ring-2 focus:ring-ring focus:outline-none"
                                         />
-                                        {errors.description && (
-                                            <p className="text-sm text-destructive mt-1">{errors.description}</p>
-                                        )}
+                                        {errors.description && <p className="mt-1 text-sm text-destructive">{errors.description}</p>}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -224,9 +212,7 @@ export default function ProductCreate({ categories }: Props) {
                                                 placeholder="0.00"
                                                 className={errors.price ? 'border-destructive' : ''}
                                             />
-                                            {errors.price && (
-                                                <p className="text-sm text-destructive mt-1">{errors.price}</p>
-                                            )}
+                                            {errors.price && <p className="mt-1 text-sm text-destructive">{errors.price}</p>}
                                         </div>
 
                                         <div>
@@ -241,9 +227,7 @@ export default function ProductCreate({ categories }: Props) {
                                                 placeholder="0.00"
                                                 className={errors.cost_price ? 'border-destructive' : ''}
                                             />
-                                            {errors.cost_price && (
-                                                <p className="text-sm text-destructive mt-1">{errors.cost_price}</p>
-                                            )}
+                                            {errors.cost_price && <p className="mt-1 text-sm text-destructive">{errors.cost_price}</p>}
                                         </div>
                                     </div>
 
@@ -271,9 +255,7 @@ export default function ProductCreate({ categories }: Props) {
                                                 placeholder="e.g. pcs, kg, liter"
                                                 className={errors.unit ? 'border-destructive' : ''}
                                             />
-                                            {errors.unit && (
-                                                <p className="text-sm text-destructive mt-1">{errors.unit}</p>
-                                            )}
+                                            {errors.unit && <p className="mt-1 text-sm text-destructive">{errors.unit}</p>}
                                         </div>
                                     </div>
                                 </CardContent>
@@ -297,9 +279,7 @@ export default function ProductCreate({ categories }: Props) {
                                                 placeholder="Leave empty to auto-generate"
                                                 className={errors.sku ? 'border-destructive' : ''}
                                             />
-                                            {errors.sku && (
-                                                <p className="text-sm text-destructive mt-1">{errors.sku}</p>
-                                            )}
+                                            {errors.sku && <p className="mt-1 text-sm text-destructive">{errors.sku}</p>}
                                         </div>
 
                                         <div>
@@ -311,9 +291,7 @@ export default function ProductCreate({ categories }: Props) {
                                                 placeholder="Enter barcode"
                                                 className={errors.barcode ? 'border-destructive' : ''}
                                             />
-                                            {errors.barcode && (
-                                                <p className="text-sm text-destructive mt-1">{errors.barcode}</p>
-                                            )}
+                                            {errors.barcode && <p className="mt-1 text-sm text-destructive">{errors.barcode}</p>}
                                         </div>
                                     </div>
 
@@ -330,9 +308,7 @@ export default function ProductCreate({ categories }: Props) {
                                                 placeholder="0.00"
                                                 className={errors.weight ? 'border-destructive' : ''}
                                             />
-                                            {errors.weight && (
-                                                <p className="text-sm text-destructive mt-1">{errors.weight}</p>
-                                            )}
+                                            {errors.weight && <p className="mt-1 text-sm text-destructive">{errors.weight}</p>}
                                         </div>
 
                                         <div>
@@ -344,9 +320,7 @@ export default function ProductCreate({ categories }: Props) {
                                                 placeholder="e.g. 10x5x2 cm"
                                                 className={errors.dimensions ? 'border-destructive' : ''}
                                             />
-                                            {errors.dimensions && (
-                                                <p className="text-sm text-destructive mt-1">{errors.dimensions}</p>
-                                            )}
+                                            {errors.dimensions && <p className="mt-1 text-sm text-destructive">{errors.dimensions}</p>}
                                         </div>
                                     </div>
                                 </CardContent>
@@ -397,12 +371,10 @@ export default function ProductCreate({ categories }: Props) {
                                             Track Stock Levels
                                         </Label>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">
-                                        Enable inventory tracking for this product
-                                    </p>
+                                    <p className="text-sm text-muted-foreground">Enable inventory tracking for this product</p>
 
                                     {formData.track_stock && (
-                                        <div className="space-y-4 pt-4 border-t">
+                                        <div className="space-y-4 border-t pt-4">
                                             <div>
                                                 <Label htmlFor="stock_quantity">Current Stock</Label>
                                                 <Input
@@ -414,9 +386,7 @@ export default function ProductCreate({ categories }: Props) {
                                                     placeholder="0"
                                                     className={errors.stock_quantity ? 'border-destructive' : ''}
                                                 />
-                                                {errors.stock_quantity && (
-                                                    <p className="text-sm text-destructive mt-1">{errors.stock_quantity}</p>
-                                                )}
+                                                {errors.stock_quantity && <p className="mt-1 text-sm text-destructive">{errors.stock_quantity}</p>}
                                             </div>
 
                                             <div>
@@ -429,9 +399,7 @@ export default function ProductCreate({ categories }: Props) {
                                                     onChange={(e) => handleChange('min_stock_level', e.target.value)}
                                                     placeholder="0"
                                                 />
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    Alert when stock falls below this level
-                                                </p>
+                                                <p className="mt-1 text-xs text-muted-foreground">Alert when stock falls below this level</p>
                                             </div>
 
                                             <div>
@@ -444,9 +412,7 @@ export default function ProductCreate({ categories }: Props) {
                                                     onChange={(e) => handleChange('max_stock_level', e.target.value)}
                                                     placeholder="0"
                                                 />
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    Optional maximum stock level for reordering
-                                                </p>
+                                                <p className="mt-1 text-xs text-muted-foreground">Optional maximum stock level for reordering</p>
                                             </div>
                                         </div>
                                     )}
@@ -459,11 +425,7 @@ export default function ProductCreate({ categories }: Props) {
                                     <CardTitle>Actions</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
-                                    <Button 
-                                        type="submit" 
-                                        className="w-full flex items-center gap-2" 
-                                        disabled={processing}
-                                    >
+                                    <Button type="submit" className="flex w-full items-center gap-2" disabled={processing}>
                                         <Save className="h-4 w-4" />
                                         {processing ? 'Creating...' : 'Create Product'}
                                     </Button>
@@ -479,5 +441,5 @@ export default function ProductCreate({ categories }: Props) {
                 </form>
             </div>
         </AppLayout>
-    )
+    );
 }

@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Order;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RefundOrderRequest extends FormRequest
@@ -57,8 +56,8 @@ class RefundOrderRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $order = $this->route('order');
-            
-            if ($order && !$order->canBeRefunded()) {
+
+            if ($order && ! $order->canBeRefunded()) {
                 $validator->errors()->add('order', 'This order cannot be refunded.');
             }
         });

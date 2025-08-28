@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /*
@@ -35,10 +34,10 @@ expect()->extend('toBeOne', function () {
 
 expect()->extend('toHaveRecord', function (array $data) {
     $table = $this->value;
-    
+
     expect(\Illuminate\Support\Facades\DB::table($table)->where($data)->exists())
-        ->toBeTrue("Failed asserting that table [{$table}] has record matching: " . json_encode($data));
-    
+        ->toBeTrue("Failed asserting that table [{$table}] has record matching: ".json_encode($data));
+
     return $this;
 });
 
@@ -60,6 +59,7 @@ expect()->extend('toBeModel', function (string $model) {
 function actingAsUser(?string $guard = null): Tests\TestCase
 {
     $user = \App\Models\User::factory()->create();
+
     return test()->actingAs($user, $guard);
 }
 

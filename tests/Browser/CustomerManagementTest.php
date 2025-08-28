@@ -1,14 +1,17 @@
 <?php
 
-use App\Models\{User, Customer, Order};
+use App\Models\Customer;
+use App\Models\Order;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use function Pest\Laravel\{actingAs};
+
+use function Pest\Laravel\actingAs;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->user = User::factory()->create();
-    
+
     // Create test customers with various attributes
     $this->customers = collect([
         Customer::factory()->create([
@@ -33,13 +36,13 @@ beforeEach(function () {
             'created_at' => now()->subDays(5),
         ]),
     ]);
-    
+
     // Create orders for customers to test relationships
     Order::factory()->count(3)->create([
         'customer_id' => $this->customers[0]->id,
         'total_amount' => 199.99,
     ]);
-    
+
     Order::factory()->create([
         'customer_id' => $this->customers[1]->id,
         'total_amount' => 299.99,
@@ -49,9 +52,9 @@ beforeEach(function () {
 describe('Customer Index Page', function () {
     it('displays all customers with their information', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers');
-        
+
         $page->assertSee('Customers')
             ->assertSee('Customer Management')
             ->assertSee('Alice Johnson')
@@ -70,9 +73,9 @@ describe('Customer Index Page', function () {
 
     it('can search customers by name, email, or phone', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers');
-        
+
         // Search by name
         $page->fill('[data-testid="search-input"]', 'Alice')
             ->click('[data-testid="search-button"]')
@@ -81,7 +84,7 @@ describe('Customer Index Page', function () {
             ->assertDontSee('Bob Smith')
             ->assertDontSee('Charlie Brown')
             ->assertNoJavascriptErrors();
-        
+
         // Search by email
         $page->fill('[data-testid="search-input"]', 'bob@example.com')
             ->click('[data-testid="search-button"]')
@@ -90,7 +93,7 @@ describe('Customer Index Page', function () {
             ->assertDontSee('Alice Johnson')
             ->assertDontSee('Charlie Brown')
             ->assertNoJavascriptErrors();
-        
+
         // Search by phone
         $page->fill('[data-testid="search-input"]', '555-0103')
             ->click('[data-testid="search-button"]')
@@ -103,9 +106,9 @@ describe('Customer Index Page', function () {
 
     it('can filter customers by status', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers');
-        
+
         // Filter by active status
         $page->selectValue('[data-testid="status-filter"]', 'active')
             ->waitForText('Alice Johnson')
@@ -113,7 +116,7 @@ describe('Customer Index Page', function () {
             ->assertSee('Bob Smith')
             ->assertDontSee('Charlie Brown')
             ->assertNoJavascriptErrors();
-        
+
         // Filter by inactive status
         $page->selectValue('[data-testid="status-filter"]', 'inactive')
             ->waitForText('Charlie Brown')
@@ -125,19 +128,19 @@ describe('Customer Index Page', function () {
 
     it('can sort customers by different fields', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers');
-        
+
         // Sort by name
         $page->click('[data-testid="sort-name"]')
             ->waitFor(1000) // Wait for sort to apply
             ->assertNoJavascriptErrors();
-        
+
         // Sort by creation date
         $page->click('[data-testid="sort-created"]')
             ->waitFor(1000)
             ->assertNoJavascriptErrors();
-        
+
         // Sort by total orders
         $page->click('[data-testid="sort-orders"]')
             ->waitFor(1000)
@@ -146,9 +149,9 @@ describe('Customer Index Page', function () {
 
     it('shows customer statistics', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers');
-        
+
         $page->assertSee('Total Customers')
             ->assertSee('Active Customers')
             ->assertSee('New This Month')
@@ -161,9 +164,9 @@ describe('Customer Index Page', function () {
 
     it('can export customers to CSV', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers');
-        
+
         $page->click('[data-testid="export-customers"]')
             ->waitForDownload()
             ->assertNoJavascriptErrors();
@@ -173,9 +176,9 @@ describe('Customer Index Page', function () {
 describe('Customer Creation', function () {
     it('can create new customer with valid data', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers/create');
-        
+
         $page->assertSee('Create Customer')
             ->fill('name', 'David Wilson')
             ->fill('email', 'david@example.com')
@@ -190,7 +193,7 @@ describe('Customer Creation', function () {
             ->assertSee('Customer created successfully')
             ->assertSee('David Wilson')
             ->assertNoJavascriptErrors();
-        
+
         // Verify customer was created in database
         $customer = Customer::where('email', 'david@example.com')->first();
         expect($customer)->not->toBeNull();
@@ -201,9 +204,9 @@ describe('Customer Creation', function () {
 
     it('validates required fields', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers/create');
-        
+
         $page->click('Create Customer')
             ->waitForText('The name field is required')
             ->assertSee('The name field is required')
@@ -214,9 +217,9 @@ describe('Customer Creation', function () {
 
     it('validates email format', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers/create');
-        
+
         $page->fill('name', 'Test User')
             ->fill('email', 'invalid-email')
             ->fill('phone', '555-0105')
@@ -228,9 +231,9 @@ describe('Customer Creation', function () {
 
     it('validates unique email', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers/create');
-        
+
         $page->fill('name', 'Test User')
             ->fill('email', 'alice@example.com') // Existing email
             ->fill('phone', '555-0105')
@@ -242,9 +245,9 @@ describe('Customer Creation', function () {
 
     it('can cancel customer creation', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers/create');
-        
+
         $page->fill('name', 'Test User')
             ->fill('email', 'test@example.com')
             ->click('Cancel')
@@ -257,11 +260,11 @@ describe('Customer Creation', function () {
 describe('Customer Details and Editing', function () {
     it('shows customer details with order history', function () {
         actingAs($this->user);
-        
+
         $customer = $this->customers[0];
-        
+
         $page = visit("/customers/{$customer->id}");
-        
+
         $page->assertSee('Customer Details')
             ->assertSee('Alice Johnson')
             ->assertSee('alice@example.com')
@@ -275,11 +278,11 @@ describe('Customer Details and Editing', function () {
 
     it('can edit customer information', function () {
         actingAs($this->user);
-        
+
         $customer = $this->customers[0];
-        
+
         $page = visit("/customers/{$customer->id}/edit");
-        
+
         $page->assertSee('Edit Customer')
             ->assertInputValue('name', 'Alice Johnson')
             ->assertInputValue('email', 'alice@example.com')
@@ -294,7 +297,7 @@ describe('Customer Details and Editing', function () {
             ->assertSee('555-0199')
             ->assertSee('Inactive')
             ->assertNoJavascriptErrors();
-        
+
         // Verify customer was updated in database
         $customer->refresh();
         expect($customer->name)->toBe('Alice Johnson Updated');
@@ -304,11 +307,11 @@ describe('Customer Details and Editing', function () {
 
     it('can delete customer without orders', function () {
         actingAs($this->user);
-        
+
         $customer = $this->customers[2]; // Charlie has no orders
-        
+
         $page = visit("/customers/{$customer->id}");
-        
+
         $page->click('[data-testid="delete-customer"]')
             ->waitForText('Delete Customer')
             ->assertSee('Are you sure you want to delete this customer?')
@@ -317,18 +320,18 @@ describe('Customer Details and Editing', function () {
             ->assertSee('Customer deleted successfully')
             ->assertDontSee('Charlie Brown')
             ->assertNoJavascriptErrors();
-        
+
         // Verify customer was deleted from database
         expect(Customer::find($customer->id))->toBeNull();
     });
 
     it('prevents deletion of customer with orders', function () {
         actingAs($this->user);
-        
+
         $customer = $this->customers[0]; // Alice has orders
-        
+
         $page = visit("/customers/{$customer->id}");
-        
+
         $page->click('[data-testid="delete-customer"]')
             ->waitForText('Cannot Delete Customer')
             ->assertSee('This customer has existing orders and cannot be deleted')
@@ -336,18 +339,18 @@ describe('Customer Details and Editing', function () {
             ->click('Cancel')
             ->assertSee('Alice Johnson')
             ->assertNoJavascriptErrors();
-        
+
         // Verify customer still exists in database
         expect(Customer::find($customer->id))->not->toBeNull();
     });
 
     it('can add notes to customer', function () {
         actingAs($this->user);
-        
+
         $customer = $this->customers[0];
-        
+
         $page = visit("/customers/{$customer->id}");
-        
+
         $page->click('[data-testid="add-note"]')
             ->waitForText('Add Customer Note')
             ->fill('[data-testid="note-content"]', 'Customer prefers email communication')
@@ -362,9 +365,9 @@ describe('Customer Details and Editing', function () {
 describe('Customer Analytics', function () {
     it('displays customer analytics and insights', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers?view=analytics');
-        
+
         $page->assertSee('Customer Analytics')
             ->assertSee('Customer Acquisition')
             ->assertSee('Customer Lifetime Value')
@@ -377,9 +380,9 @@ describe('Customer Analytics', function () {
 
     it('shows customer lifetime value calculations', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers?view=analytics');
-        
+
         $page->assertSee('Average Order Value')
             ->assertSee('Purchase Frequency')
             ->assertSee('Customer Lifespan')
@@ -389,14 +392,14 @@ describe('Customer Analytics', function () {
 
     it('can filter analytics by customer segments', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers?view=analytics');
-        
+
         $page->selectValue('[data-testid="segment-filter"]', 'high-value')
             ->waitForText('High-Value Customers')
             ->assertSee('High-Value Customers')
             ->assertNoJavascriptErrors();
-        
+
         $page->selectValue('[data-testid="segment-filter"]', 'new')
             ->waitForText('New Customers')
             ->assertSee('New Customers')
@@ -407,9 +410,9 @@ describe('Customer Analytics', function () {
 describe('Customer Import/Export', function () {
     it('can import customers from CSV', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers/import');
-        
+
         $page->assertSee('Import Customers')
             ->assertSee('Upload CSV File')
             ->assertSee('Download Template')
@@ -420,9 +423,9 @@ describe('Customer Import/Export', function () {
 
     it('validates CSV format during import', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers/import');
-        
+
         // Upload invalid CSV (this would need a test file)
         $page->attachFile('[data-testid="csv-file"]', 'tests/fixtures/invalid-customers.csv')
             ->click('Import Customers')
@@ -435,17 +438,17 @@ describe('Customer Import/Export', function () {
 describe('Mobile Customer Management', function () {
     it('works correctly on mobile devices', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers')
             ->resize(375, 667); // iPhone size
-        
+
         $page->assertSee('Customers')
             ->assertElementExists('[data-testid="customers-table"]')
             ->assertNoJavascriptErrors();
-        
+
         // Test mobile-specific interactions
         $customer = $this->customers[0];
-        $page->click('[data-testid="customer-' . $customer->id . '"]')
+        $page->click('[data-testid="customer-'.$customer->id.'"]')
             ->waitForPath("/customers/{$customer->id}")
             ->assertSee('Customer Details')
             ->assertNoJavascriptErrors();
@@ -453,10 +456,10 @@ describe('Mobile Customer Management', function () {
 
     it('displays mobile-optimized customer cards', function () {
         actingAs($this->user);
-        
+
         $page = visit('/customers')
             ->resize(375, 667);
-        
+
         $page->click('[data-testid="mobile-view-toggle"]')
             ->waitForText('Card View')
             ->assertElementExists('[data-testid="customer-card"]')

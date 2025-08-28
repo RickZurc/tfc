@@ -27,10 +27,10 @@ class CartBackupController extends Controller
 
             $userId = auth()->id();
             $sessionId = session()->getId();
-            
+
             // Create a unique key for this user/session
             $cacheKey = "pos_cart_backup_{$userId}_{$sessionId}";
-            
+
             $cartData = [
                 'items' => $request->items,
                 'discountAmount' => $request->discountAmount ?? '0',
@@ -77,12 +77,12 @@ class CartBackupController extends Controller
         try {
             $userId = auth()->id();
             $sessionId = session()->getId();
-            
+
             $cacheKey = "pos_cart_backup_{$userId}_{$sessionId}";
-            
+
             $cartData = Cache::get($cacheKey);
-            
-            if (!$cartData) {
+
+            if (! $cartData) {
                 return response()->json([
                     'success' => false,
                     'message' => 'No saved cart found',
@@ -116,9 +116,9 @@ class CartBackupController extends Controller
         try {
             $userId = auth()->id();
             $sessionId = session()->getId();
-            
+
             $cacheKey = "pos_cart_backup_{$userId}_{$sessionId}";
-            
+
             Cache::forget($cacheKey);
 
             return response()->json([
@@ -146,12 +146,12 @@ class CartBackupController extends Controller
         try {
             $userId = auth()->id();
             $sessionId = session()->getId();
-            
+
             $cacheKey = "pos_cart_backup_{$userId}_{$sessionId}";
-            
+
             $cartData = Cache::get($cacheKey);
-            
-            if (!$cartData) {
+
+            if (! $cartData) {
                 return response()->json([
                     'success' => true,
                     'has_backup' => false,

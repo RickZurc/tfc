@@ -1,55 +1,43 @@
-import { useState } from 'react'
-import { Head, Link, router, usePage } from '@inertiajs/react'
-import AppLayout from '@/layouts/app-layout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { DynamicIcon } from '@/components/ui/dynamic-icon'
-import { type BreadcrumbItem } from '@/types'
-import { 
-    Plus, 
-    Search, 
-    MoreHorizontal, 
-    Edit, 
-    Trash2, 
-    Eye, 
-    Power,
-    Package2,
-    Filter,
-    RefreshCw,
-    Tag
-} from 'lucide-react'
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DynamicIcon } from '@/components/ui/dynamic-icon';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Edit, Eye, Filter, MoreHorizontal, Package2, Plus, Power, RefreshCw, Search, Tag, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 interface Category {
-    id: number
-    name: string
-    slug: string
-    description: string | null
-    color: string
-    icon: string | null
-    is_active: boolean
-    products_count: number
-    created_at: string
-    updated_at: string
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+    color: string;
+    icon: string | null;
+    is_active: boolean;
+    products_count: number;
+    created_at: string;
+    updated_at: string;
 }
 
 interface PageProps extends Record<string, unknown> {
     categories: {
-        data: Category[]
-        links: any[]
-        current_page: number
-        last_page: number
-        per_page: number
-        total: number
-    }
+        data: Category[];
+        links: any[];
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+    };
     filters: {
-        search?: string
-        status?: string
-    }
+        search?: string;
+        status?: string;
+    };
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -57,71 +45,87 @@ const breadcrumbs: BreadcrumbItem[] = [
         title: 'Categories',
         href: '/categories',
     },
-]
+];
 
 export default function CategoriesIndex() {
-    const { categories, filters } = usePage<PageProps>().props
-    const [searchQuery, setSearchQuery] = useState(filters.search || '')
-    const [statusFilter, setStatusFilter] = useState(filters.status || 'all')
+    const { categories, filters } = usePage<PageProps>().props;
+    const [searchQuery, setSearchQuery] = useState(filters.search || '');
+    const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
     const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; category: Category | null }>({
         open: false,
-        category: null
-    })
+        category: null,
+    });
 
     const handleSearch = () => {
-        router.get('/categories', {
-            search: searchQuery || undefined,
-            status: statusFilter !== 'all' ? statusFilter : undefined,
-        }, {
-            preserveState: true,
-            replace: true,
-        })
-    }
+        router.get(
+            '/categories',
+            {
+                search: searchQuery || undefined,
+                status: statusFilter !== 'all' ? statusFilter : undefined,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
-            handleSearch()
+            handleSearch();
         }
-    }
+    };
 
     const handleStatusChange = (value: string) => {
-        setStatusFilter(value)
-        router.get('/categories', {
-            search: searchQuery || undefined,
-            status: value !== 'all' ? value : undefined,
-        }, {
-            preserveState: true,
-            replace: true,
-        })
-    }
+        setStatusFilter(value);
+        router.get(
+            '/categories',
+            {
+                search: searchQuery || undefined,
+                status: value !== 'all' ? value : undefined,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
 
     const handleReset = () => {
-        setSearchQuery('')
-        setStatusFilter('all')
-        router.get('/categories', {}, {
-            preserveState: true,
-            replace: true,
-        })
-    }
+        setSearchQuery('');
+        setStatusFilter('all');
+        router.get(
+            '/categories',
+            {},
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
 
     const handleToggleStatus = (category: Category) => {
-        router.patch(`/categories/${category.id}/toggle-status`, {}, {
-            preserveState: true,
-        })
-    }
+        router.patch(
+            `/categories/${category.id}/toggle-status`,
+            {},
+            {
+                preserveState: true,
+            },
+        );
+    };
 
     const handleDelete = (category: Category) => {
         router.delete(`/categories/${category.id}`, {
             preserveState: true,
-        })
-        setDeleteDialog({ open: false, category: null })
-    }
+        });
+        setDeleteDialog({ open: false, category: null });
+    };
 
-    const hasActiveFilters = searchQuery.trim() !== '' || statusFilter !== 'all'
+    const hasActiveFilters = searchQuery.trim() !== '' || statusFilter !== 'all';
 
     const getStatusVariant = (isActive: boolean) => {
-        return isActive ? 'default' : 'secondary'
-    }
+        return isActive ? 'default' : 'secondary';
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -129,16 +133,14 @@ export default function CategoriesIndex() {
 
             <div className="p-6">
                 {/* Header */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
-                        <p className="text-muted-foreground">
-                            Manage product categories and organize your inventory
-                        </p>
+                        <p className="text-muted-foreground">Manage product categories and organize your inventory</p>
                     </div>
                     <Link href="/categories/create">
                         <Button>
-                            <Plus className="h-4 w-4 mr-2" />
+                            <Plus className="mr-2 h-4 w-4" />
                             Add Category
                         </Button>
                     </Link>
@@ -158,9 +160,9 @@ export default function CategoriesIndex() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
                                 <Input
                                     placeholder="Search categories..."
                                     value={searchQuery}
@@ -183,7 +185,7 @@ export default function CategoriesIndex() {
 
                             <div className="flex gap-2">
                                 <Button onClick={handleSearch} className="flex-1">
-                                    <Search className="h-4 w-4 mr-2" />
+                                    <Search className="mr-2 h-4 w-4" />
                                     Search
                                 </Button>
                                 <Button variant="outline" onClick={handleReset}>
@@ -195,16 +197,16 @@ export default function CategoriesIndex() {
                 </Card>
 
                 {/* Categories Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {categories.data.length === 0 ? (
                         <div className="col-span-full">
                             <Card>
                                 <CardContent className="flex flex-col items-center justify-center py-12">
-                                    <Package2 className="w-12 h-12 mb-4 text-muted-foreground" />
-                                    <h3 className="text-lg font-semibold mb-2">No categories found</h3>
-                                    <p className="text-muted-foreground text-center mb-4">
-                                        {hasActiveFilters 
-                                            ? 'No categories match your current filters' 
+                                    <Package2 className="mb-4 h-12 w-12 text-muted-foreground" />
+                                    <h3 className="mb-2 text-lg font-semibold">No categories found</h3>
+                                    <p className="mb-4 text-center text-muted-foreground">
+                                        {hasActiveFilters
+                                            ? 'No categories match your current filters'
                                             : 'Get started by creating your first category'}
                                     </p>
                                     {hasActiveFilters ? (
@@ -214,7 +216,7 @@ export default function CategoriesIndex() {
                                     ) : (
                                         <Link href="/categories/create">
                                             <Button>
-                                                <Plus className="h-4 w-4 mr-2" />
+                                                <Plus className="mr-2 h-4 w-4" />
                                                 Add Category
                                             </Button>
                                         </Link>
@@ -224,28 +226,18 @@ export default function CategoriesIndex() {
                         </div>
                     ) : (
                         categories.data.map((category) => (
-                            <Card key={category.id} className="hover:shadow-md transition-shadow">
+                            <Card key={category.id} className="transition-shadow hover:shadow-md">
                                 <CardContent className="p-6">
-                                    <div className="flex items-start justify-between mb-4">
+                                    <div className="mb-4 flex items-start justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className="flex items-center gap-2">
-                                                <div 
-                                                    className="w-4 h-4 rounded-full border"
-                                                    style={{ backgroundColor: category.color }}
-                                                />
-                                                <div 
-                                                    className="p-2 rounded-md"
-                                                    style={{ backgroundColor: `${category.color}20` }}
-                                                >
-                                                    <DynamicIcon 
-                                                        name={category.icon}
-                                                        className="h-4 w-4" 
-                                                        style={{ color: category.color }}
-                                                    />
+                                                <div className="h-4 w-4 rounded-full border" style={{ backgroundColor: category.color }} />
+                                                <div className="rounded-md p-2" style={{ backgroundColor: `${category.color}20` }}>
+                                                    <DynamicIcon name={category.icon} className="h-4 w-4" style={{ color: category.color }} />
                                                 </div>
                                             </div>
                                             <div>
-                                                <h3 className="font-semibold text-lg">{category.name}</h3>
+                                                <h3 className="text-lg font-semibold">{category.name}</h3>
                                                 <Badge variant={getStatusVariant(category.is_active)} className="mt-1">
                                                     {category.is_active ? 'Active' : 'Inactive'}
                                                 </Badge>
@@ -260,25 +252,25 @@ export default function CategoriesIndex() {
                                             <DropdownMenuContent align="end">
                                                 <Link href={`/categories/${category.id}`}>
                                                     <DropdownMenuItem>
-                                                        <Eye className="h-4 w-4 mr-2" />
+                                                        <Eye className="mr-2 h-4 w-4" />
                                                         View Details
                                                     </DropdownMenuItem>
                                                 </Link>
                                                 <Link href={`/categories/${category.id}/edit`}>
                                                     <DropdownMenuItem>
-                                                        <Edit className="h-4 w-4 mr-2" />
+                                                        <Edit className="mr-2 h-4 w-4" />
                                                         Edit
                                                     </DropdownMenuItem>
                                                 </Link>
                                                 <DropdownMenuItem onClick={() => handleToggleStatus(category)}>
-                                                    <Power className="h-4 w-4 mr-2" />
+                                                    <Power className="mr-2 h-4 w-4" />
                                                     {category.is_active ? 'Deactivate' : 'Activate'}
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem 
+                                                <DropdownMenuItem
                                                     className="text-destructive"
                                                     onClick={() => setDeleteDialog({ open: true, category })}
                                                 >
-                                                    <Trash2 className="h-4 w-4 mr-2" />
+                                                    <Trash2 className="mr-2 h-4 w-4" />
                                                     Delete
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
@@ -286,9 +278,7 @@ export default function CategoriesIndex() {
                                     </div>
 
                                     {category.description && (
-                                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                                            {category.description}
-                                        </p>
+                                        <p className="mb-4 line-clamp-2 text-sm text-muted-foreground">{category.description}</p>
                                     )}
 
                                     <div className="flex items-center justify-between text-sm">
@@ -317,7 +307,7 @@ export default function CategoriesIndex() {
                             {categories.links.map((link: any, index: number) => (
                                 <Button
                                     key={index}
-                                    variant={link.active ? "default" : "outline"}
+                                    variant={link.active ? 'default' : 'outline'}
                                     size="sm"
                                     disabled={!link.url}
                                     onClick={() => link.url && router.visit(link.url)}
@@ -339,8 +329,9 @@ export default function CategoriesIndex() {
                                 <>
                                     Are you sure you want to delete "{deleteDialog.category.name}"?
                                     {deleteDialog.category.products_count > 0 && (
-                                        <span className="text-destructive font-medium">
-                                            {' '}This category has {deleteDialog.category.products_count} products and cannot be deleted.
+                                        <span className="font-medium text-destructive">
+                                            {' '}
+                                            This category has {deleteDialog.category.products_count} products and cannot be deleted.
                                         </span>
                                     )}
                                     {deleteDialog.category.products_count === 0 && ' This action cannot be undone.'}
@@ -353,10 +344,7 @@ export default function CategoriesIndex() {
                             Cancel
                         </Button>
                         {deleteDialog.category && deleteDialog.category.products_count === 0 && (
-                            <Button 
-                                variant="destructive"
-                                onClick={() => deleteDialog.category && handleDelete(deleteDialog.category)}
-                            >
+                            <Button variant="destructive" onClick={() => deleteDialog.category && handleDelete(deleteDialog.category)}>
                                 Delete
                             </Button>
                         )}
@@ -364,5 +352,5 @@ export default function CategoriesIndex() {
                 </DialogContent>
             </Dialog>
         </AppLayout>
-    )
+    );
 }

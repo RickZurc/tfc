@@ -271,7 +271,7 @@ class ProductController extends Controller
                 $productsWithOrders = Product::whereIn('id', $request->products)
                     ->whereHas('orderItems')
                     ->count();
-                    
+
                 if ($productsWithOrders > 0) {
                     return redirect()
                         ->route('products.index')

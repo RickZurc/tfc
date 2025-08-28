@@ -19,11 +19,11 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         $name = $this->faker->words(3, true);
-        
+
         return [
             'category_id' => Category::factory(),
             'name' => $name,
-            'slug' => Str::slug($name) . '-' . $this->faker->unique()->numberBetween(1, 9999),
+            'slug' => Str::slug($name).'-'.$this->faker->unique()->numberBetween(1, 9999),
             'description' => $this->faker->paragraph(),
             'sku' => strtoupper($this->faker->unique()->bothify('???-###')),
             'barcode' => $this->faker->optional()->ean13(),

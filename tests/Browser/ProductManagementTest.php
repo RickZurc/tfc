@@ -1,17 +1,20 @@
 <?php
 
-use App\Models\{User, Category, Product};
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use function Pest\Laravel\{actingAs};
+
+use function Pest\Laravel\actingAs;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->user = User::factory()->create();
-    
+
     // Create test categories
     $this->categories = Category::factory()->count(3)->create();
-    
+
     // Create test products
     $this->products = collect([
         Product::factory()->create([
@@ -47,9 +50,9 @@ beforeEach(function () {
 describe('Products Index Page', function () {
     it('displays all products with details', function () {
         actingAs($this->user);
-        
+
         $page = visit('/products');
-        
+
         $page->assertSee('Products')
             ->assertSee('iPhone 15')
             ->assertSee('Samsung Galaxy S24')
@@ -63,9 +66,9 @@ describe('Products Index Page', function () {
 
     it('can filter products by status', function () {
         actingAs($this->user);
-        
+
         $page = visit('/products');
-        
+
         // Filter by active only
         $page->selectValue('[data-testid="status-filter"]', 'active')
             ->waitForText('iPhone 15')
@@ -73,7 +76,7 @@ describe('Products Index Page', function () {
             ->assertSee('Samsung Galaxy S24')
             ->assertDontSee('Inactive Product')
             ->assertNoJavascriptErrors();
-        
+
         // Filter by inactive only
         $page->selectValue('[data-testid="status-filter"]', 'inactive')
             ->waitForText('Inactive Product')
@@ -85,9 +88,9 @@ describe('Products Index Page', function () {
 
     it('can filter products by category', function () {
         actingAs($this->user);
-        
+
         $page = visit('/products');
-        
+
         $page->selectValue('[data-testid="category-filter"]', $this->categories[0]->id)
             ->waitForText('iPhone 15')
             ->assertSee('iPhone 15')
@@ -98,9 +101,9 @@ describe('Products Index Page', function () {
 
     it('can search products by name or SKU', function () {
         actingAs($this->user);
-        
+
         $page = visit('/products');
-        
+
         // Search by name
         $page->fill('[data-testid="search-input"]', 'iPhone')
             ->click('[data-testid="search-button"]')
@@ -108,7 +111,7 @@ describe('Products Index Page', function () {
             ->assertSee('iPhone 15')
             ->assertDontSee('Samsung Galaxy S24')
             ->assertNoJavascriptErrors();
-        
+
         // Search by SKU
         $page->fill('[data-testid="search-input"]', 'SAM24')
             ->click('[data-testid="search-button"]')
@@ -125,11 +128,11 @@ describe('Products Index Page', function () {
             'stock_quantity' => 2,
             'is_active' => true,
         ]);
-        
+
         actingAs($this->user);
-        
+
         $page = visit('/products');
-        
+
         $page->assertSee('Low Stock Item')
             ->assertSee('Low Stock') // Should show warning indicator
             ->assertNoJavascriptErrors();
@@ -137,27 +140,27 @@ describe('Products Index Page', function () {
 
     it('can toggle product status', function () {
         actingAs($this->user);
-        
+
         $page = visit('/products');
-        
+
         // Toggle the first active product to inactive
-        $page->click('[data-testid="toggle-status-' . $this->products[0]->id . '"]')
+        $page->click('[data-testid="toggle-status-'.$this->products[0]->id.'"]')
             ->waitForText('Product status updated')
             ->assertSee('Product status updated')
             ->assertNoJavascriptErrors();
-        
+
         // Verify the product is now inactive in database
         expect($this->products[0]->fresh()->is_active)->toBeFalse();
     });
 
     it('can bulk select and perform actions', function () {
         actingAs($this->user);
-        
+
         $page = visit('/products');
-        
+
         // Select multiple products
-        $page->check('[data-testid="select-' . $this->products[0]->id . '"]')
-            ->check('[data-testid="select-' . $this->products[1]->id . '"]')
+        $page->check('[data-testid="select-'.$this->products[0]->id.'"]')
+            ->check('[data-testid="select-'.$this->products[1]->id.'"]')
             ->selectValue('[data-testid="bulk-action"]', 'deactivate')
             ->click('[data-testid="apply-bulk-action"]')
             ->waitForText('Bulk action completed')
@@ -169,9 +172,9 @@ describe('Products Index Page', function () {
 describe('Product Creation', function () {
     it('can create a new product', function () {
         actingAs($this->user);
-        
+
         $page = visit('/products/create');
-        
+
         $page->assertSee('Create Product')
             ->fill('name', 'New Test Product')
             ->fill('description', 'This is a test product')
@@ -185,7 +188,7 @@ describe('Product Creation', function () {
             ->assertSee('Product created successfully')
             ->assertSee('New Test Product')
             ->assertNoJavascriptErrors();
-        
+
         // Verify in database
         expect(Product::where('name', 'New Test Product')->exists())->toBeTrue();
         expect(Product::where('sku', 'TEST-001')->first()->price)->toBe(199.99);
@@ -193,9 +196,9 @@ describe('Product Creation', function () {
 
     it('validates required fields', function () {
         actingAs($this->user);
-        
+
         $page = visit('/products/create');
-        
+
         $page->click('Create Product')
             ->waitForText('The name field is required')
             ->assertSee('The name field is required')
@@ -207,9 +210,9 @@ describe('Product Creation', function () {
 
     it('validates unique SKU', function () {
         actingAs($this->user);
-        
+
         $page = visit('/products/create');
-        
+
         $page->fill('name', 'Test Product')
             ->fill('description', 'Test description')
             ->fill('price', '99.99')
@@ -224,9 +227,9 @@ describe('Product Creation', function () {
 
     it('validates price format', function () {
         actingAs($this->user);
-        
+
         $page = visit('/products/create');
-        
+
         $page->fill('name', 'Test Product')
             ->fill('price', 'invalid-price')
             ->fill('sku', 'TEST-002')
@@ -241,17 +244,17 @@ describe('Product Creation', function () {
 describe('Product Editing', function () {
     it('can edit existing product', function () {
         actingAs($this->user);
-        
+
         $product = $this->products[0];
-        
+
         $page = visit("/products/{$product->id}/edit");
-        
+
         $page->assertSee('Edit Product')
             ->assertInputValue('name', 'iPhone 15')
             ->assertInputValue('price', '999.99')
             ->assertInputValue('sku', 'IPH15-001')
             ->assertNoJavascriptErrors();
-        
+
         // Update the product
         $page->fill('name', 'iPhone 15 Pro')
             ->fill('price', '1099.99')
@@ -262,7 +265,7 @@ describe('Product Editing', function () {
             ->assertSee('iPhone 15 Pro')
             ->assertSee('$1,099.99')
             ->assertNoJavascriptErrors();
-        
+
         // Verify in database
         expect($product->fresh()->name)->toBe('iPhone 15 Pro');
         expect($product->fresh()->price)->toBe(1099.99);
@@ -271,17 +274,17 @@ describe('Product Editing', function () {
 
     it('can change product category', function () {
         actingAs($this->user);
-        
+
         $product = $this->products[0];
-        
+
         $page = visit("/products/{$product->id}/edit");
-        
+
         $page->selectValue('[data-testid="category-select"]', $this->categories[1]->id)
             ->click('Update Product')
             ->waitForPath('/products')
             ->assertSee('Product updated successfully')
             ->assertNoJavascriptErrors();
-        
+
         // Verify category changed in database
         expect($product->fresh()->category_id)->toBe($this->categories[1]->id);
     });
@@ -290,11 +293,11 @@ describe('Product Editing', function () {
 describe('Product Details', function () {
     it('shows product details page', function () {
         actingAs($this->user);
-        
+
         $product = $this->products[0];
-        
+
         $page = visit("/products/{$product->id}");
-        
+
         $page->assertSee('Product Details')
             ->assertSee('iPhone 15')
             ->assertSee('Latest iPhone model')
@@ -307,11 +310,11 @@ describe('Product Details', function () {
 
     it('has working action buttons', function () {
         actingAs($this->user);
-        
+
         $product = $this->products[0];
-        
+
         $page = visit("/products/{$product->id}");
-        
+
         // Test edit button
         $page->click('Edit Product')
             ->assertPath("/products/{$product->id}/edit")
@@ -323,12 +326,12 @@ describe('Product Details', function () {
 describe('Product Deletion', function () {
     it('can delete product with confirmation', function () {
         actingAs($this->user);
-        
+
         $product = $this->products[2]; // Use inactive product
-        
+
         $page = visit('/products');
-        
-        $page->click('[data-testid="delete-' . $product->id . '"]')
+
+        $page->click('[data-testid="delete-'.$product->id.'"]')
             ->waitForText('Delete Product')
             ->assertSee('Are you sure you want to delete this product?')
             ->click('Delete')
@@ -336,7 +339,7 @@ describe('Product Deletion', function () {
             ->assertSee('Product deleted successfully')
             ->assertDontSee($product->name)
             ->assertNoJavascriptErrors();
-        
+
         // Verify soft deletion in database
         expect(Product::withTrashed()->find($product->id)->trashed())->toBeTrue();
     });

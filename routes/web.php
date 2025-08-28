@@ -44,7 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->sum('refund_amount');
 
         $totalRefunds = \App\Models\Order::whereNotNull('refunded_at')->count();
-        
+
         // Calculate refund rate
         $refundRate = $totalOrders > 0 ? ($totalRefunds / $totalOrders) * 100 : 0;
 

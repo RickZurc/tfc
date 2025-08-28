@@ -1,236 +1,229 @@
-import React, { useState, useEffect } from 'react';
-import { Head, usePage } from '@inertiajs/react';
+import { usePersistedCart } from '@/hooks/usePersistedCart';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { usePersistedCart } from '@/hooks/usePersistedCart';
+import { Head, usePage } from '@inertiajs/react';
+import React, { useEffect, useState } from 'react';
 
 // POS Components
-import ProductSearch from '@/components/pos/ProductSearch';
-import CategoryFilter from '@/components/pos/CategoryFilter';
-import ProductGrid from '@/components/pos/ProductGrid';
-import CartStatusBar from '@/components/pos/CartStatusBar';
 import CartDisplay from '@/components/pos/CartDisplay';
 import CartRestoreDialog from '@/components/pos/CartRestoreDialog';
+import CartStatusBar from '@/components/pos/CartStatusBar';
+import CategoryFilter from '@/components/pos/CategoryFilter';
+import ProductGrid from '@/components/pos/ProductGrid';
+import ProductSearch from '@/components/pos/ProductSearch';
 import SaleCompletionModal from '@/components/pos/SaleCompletionModal';
 
 // Helper function to safely format currency
 const formatCurrency = (value: any): string => {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
-  return isNaN(num) ? '0.00' : num.toFixed(2);
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    return isNaN(num) ? '0.00' : num.toFixed(2);
 };
 
 interface Product {
-  id: number;
-  name: string;
-  price: string | number; // Laravel returns decimals as strings
-  sku: string;
-  stock_quantity: number;
-  track_stock: boolean;
-  category: {
     id: number;
     name: string;
-    color: string;
-  };
+    price: string | number; // Laravel returns decimals as strings
+    sku: string;
+    stock_quantity: number;
+    track_stock: boolean;
+    category: {
+        id: number;
+        name: string;
+        color: string;
+    };
 }
 
 interface Category {
-  id: number;
-  name: string;
-  color: string;
-  icon: string;
-  products: Product[];
+    id: number;
+    name: string;
+    color: string;
+    icon: string;
+    products: Product[];
 }
 
 interface CartItem extends Product {
-  quantity: number;
-  total: number;
-  price: number; // Ensure cart items have numeric price
+    quantity: number;
+    total: number;
+    price: number; // Ensure cart items have numeric price
 }
 
 interface PageProps extends Record<string, unknown> {
-  categories: Category[];
-  products: Product[];
+    categories: Category[];
+    products: Product[];
 }
 
 type PaymentMethod = 'cash' | 'card' | 'digital';
 
 const breadcrumbs: BreadcrumbItem[] = [
-  {
-    title: 'Point of Sale',
-    href: '/pos',
-  },
+    {
+        title: 'Point of Sale',
+        href: '/pos',
+    },
 ];
 
 export default function POSIndex() {
-  const { categories, products } = usePage<PageProps>().props;
-  
-  // Use the persisted cart hook
-  const {
-    cart,
-    discountAmount,
-    discountType,
-    paymentMethod,
-    customerId,
-    isLoading,
-    setCart,
-    setDiscountAmount,
-    setDiscountType,
-    setPaymentMethod,
-    setCustomerId,
-    clearCart,
-    clearStoredCart,
-    saveCartToServer,
-    getCartInfo,
-  } = usePersistedCart();
+    const { categories, products } = usePage<PageProps>().props;
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [amountPaid, setAmountPaid] = useState<string>('');
-  const [saleCompleted, setSaleCompleted] = useState<boolean>(false);
-  const [completedOrder, setCompletedOrder] = useState<any>(null);
-  const [paymentError, setPaymentError] = useState<string>('');
-  const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
-  const [showCartRestoreDialog, setShowCartRestoreDialog] = useState(false);
-  const [cartBackupInfo, setCartBackupInfo] = useState<any>(null);
+    // Use the persisted cart hook
+    const {
+        cart,
+        discountAmount,
+        discountType,
+        paymentMethod,
+        customerId,
+        isLoading,
+        setCart,
+        setDiscountAmount,
+        setDiscountType,
+        setPaymentMethod,
+        setCustomerId,
+        clearCart,
+        clearStoredCart,
+        saveCartToServer,
+        getCartInfo,
+    } = usePersistedCart();
 
-  // Check for server backup on component mount
-  useEffect(() => {
-    checkForServerBackup();
-  }, []);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+    const [amountPaid, setAmountPaid] = useState<string>('');
+    const [saleCompleted, setSaleCompleted] = useState<boolean>(false);
+    const [completedOrder, setCompletedOrder] = useState<any>(null);
+    const [paymentError, setPaymentError] = useState<string>('');
+    const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
+    const [showCartRestoreDialog, setShowCartRestoreDialog] = useState(false);
+    const [cartBackupInfo, setCartBackupInfo] = useState<any>(null);
 
-  const checkForServerBackup = async () => {
-    if (cart.length > 0) return; // Don't check if we already have items
+    // Check for server backup on component mount
+    useEffect(() => {
+        checkForServerBackup();
+    }, []);
 
-    try {
-      const response = await fetch('/api/pos/cart-info');
-      const result = await response.json();
-      
-      if (result.success && result.has_backup) {
-        setCartBackupInfo(result.info);
-        setShowCartRestoreDialog(true);
-      }
-    } catch (error) {
-      console.error('Failed to check for cart backup:', error);
-    }
-  };
+    const checkForServerBackup = async () => {
+        if (cart.length > 0) return; // Don't check if we already have items
 
-  const restoreFromServerBackup = async () => {
-    try {
-      const response = await fetch('/api/pos/restore-cart');
-      const result = await response.json();
-      
-      if (result.success && result.data) {
-        const backupData = result.data;
-        setCart(backupData.items || []);
-        setDiscountAmount(backupData.discountAmount || '0');
-        setDiscountType(backupData.discountType || 'numerical');
-        setPaymentMethod(backupData.paymentMethod || 'cash');
-        setCustomerId(backupData.customerId);
-        
-        console.log('Cart restored from server backup');
-      }
-    } catch (error) {
-      console.error('Failed to restore cart from server:', error);
-    } finally {
-      setShowCartRestoreDialog(false);
-    }
-  };
+        try {
+            const response = await fetch('/api/pos/cart-info');
+            const result = await response.json();
 
-  const startFresh = () => {
-    // Clear the cart completely
-    clearCart();
-    
-    // Reset all form fields
-    setDiscountAmount('0');
-    setDiscountType('numerical');
-    setPaymentMethod('cash');
-    setCustomerId(undefined);
-    setAmountPaid('');
-    
-    // Close the restore dialog
-    setShowCartRestoreDialog(false);
-    
-    console.log('Cart cleared - starting fresh');
-  };
+            if (result.success && result.has_backup) {
+                setCartBackupInfo(result.info);
+                setShowCartRestoreDialog(true);
+            }
+        } catch (error) {
+            console.error('Failed to check for cart backup:', error);
+        }
+    };
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         product.sku.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === null || product.category.id === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+    const restoreFromServerBackup = async () => {
+        try {
+            const response = await fetch('/api/pos/restore-cart');
+            const result = await response.json();
 
-  const addToCart = (product: Product) => {
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.id === product.id);
-      const price = parseFloat(product.price.toString()); // Ensure price is a number
-      
-      if (existingItem) {
-        return prevCart.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * price }
-            : item
-        );
-      } else {
-        return [...prevCart, { ...product, price, quantity: 1, total: price }];
-      }
+            if (result.success && result.data) {
+                const backupData = result.data;
+                setCart(backupData.items || []);
+                setDiscountAmount(backupData.discountAmount || '0');
+                setDiscountType(backupData.discountType || 'numerical');
+                setPaymentMethod(backupData.paymentMethod || 'cash');
+                setCustomerId(backupData.customerId);
+
+                console.log('Cart restored from server backup');
+            }
+        } catch (error) {
+            console.error('Failed to restore cart from server:', error);
+        } finally {
+            setShowCartRestoreDialog(false);
+        }
+    };
+
+    const startFresh = () => {
+        // Clear the cart completely
+        clearCart();
+
+        // Reset all form fields
+        setDiscountAmount('0');
+        setDiscountType('numerical');
+        setPaymentMethod('cash');
+        setCustomerId(undefined);
+        setAmountPaid('');
+
+        // Close the restore dialog
+        setShowCartRestoreDialog(false);
+
+        console.log('Cart cleared - starting fresh');
+    };
+
+    const filteredProducts = products.filter((product) => {
+        const matchesSearch =
+            product.name.toLowerCase().includes(searchQuery.toLowerCase()) || product.sku.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = selectedCategory === null || product.category.id === selectedCategory;
+        return matchesSearch && matchesCategory;
     });
-  };
 
-  const updateQuantity = (productId: number, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-    
-    setCart(prevCart =>
-      prevCart.map(item =>
-        item.id === productId
-          ? { ...item, quantity, total: quantity * parseFloat(item.price.toString()) }
-          : item
-      )
-    );
-  };
+    const addToCart = (product: Product) => {
+        setCart((prevCart) => {
+            const existingItem = prevCart.find((item) => item.id === product.id);
+            const price = parseFloat(product.price.toString()); // Ensure price is a number
 
-  const removeFromCart = (productId: number) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== productId));
-  };
+            if (existingItem) {
+                return prevCart.map((item) =>
+                    item.id === product.id ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * price } : item,
+                );
+            } else {
+                return [...prevCart, { ...product, price, quantity: 1, total: price }];
+            }
+        });
+    };
 
-  const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
-  const discountValue = parseFloat(discountAmount) || 0;
-  
-  // Validate discount based on type
-  const validatedDiscountValue = discountType === 'percentage' 
-    ? Math.min(Math.max(0, discountValue), 100) // Clamp percentage between 0-100
-    : Math.max(0, discountValue); // Ensure numerical discount is non-negative
-    
-  const discount = discountType === 'percentage' 
-    ? (subtotal * validatedDiscountValue) / 100 
-    : validatedDiscountValue;
-  const total = Math.max(0, subtotal - discount); // Ensure total doesn't go below 0
-  const amountPaidNum = parseFloat(amountPaid) || 0;
-  const change = Math.max(0, amountPaidNum - total);
-  const isPaymentSufficient = amountPaidNum >= total;
+    const updateQuantity = (productId: number, quantity: number) => {
+        if (quantity <= 0) {
+            removeFromCart(productId);
+            return;
+        }
 
-  // Clear payment error when amount paid changes and becomes sufficient
-  React.useEffect(() => {
-    if (isPaymentSufficient && paymentError) {
-      setPaymentError('');
-    }
-    if (amountPaidNum > 0 && amountPaidNum < total) {
-      setPaymentError(`Insufficient payment. $${formatCurrency(total - amountPaidNum)} short.`);
-    } else if (paymentError && isPaymentSufficient) {
-      setPaymentError('');
-    }
-  }, [amountPaidNum, total, isPaymentSufficient, paymentError]);
+        setCart((prevCart) =>
+            prevCart.map((item) => (item.id === productId ? { ...item, quantity, total: quantity * parseFloat(item.price.toString()) } : item)),
+        );
+    };
 
-  const handlePrintReceipt = () => {
-    if (!completedOrder) return;
-    
-    // Create a printable receipt
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
+    const removeFromCart = (productId: number) => {
+        setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+    };
+
+    const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
+    const discountValue = parseFloat(discountAmount) || 0;
+
+    // Validate discount based on type
+    const validatedDiscountValue =
+        discountType === 'percentage'
+            ? Math.min(Math.max(0, discountValue), 100) // Clamp percentage between 0-100
+            : Math.max(0, discountValue); // Ensure numerical discount is non-negative
+
+    const discount = discountType === 'percentage' ? (subtotal * validatedDiscountValue) / 100 : validatedDiscountValue;
+    const total = Math.max(0, subtotal - discount); // Ensure total doesn't go below 0
+    const amountPaidNum = parseFloat(amountPaid) || 0;
+    const change = Math.max(0, amountPaidNum - total);
+    const isPaymentSufficient = amountPaidNum >= total;
+
+    // Clear payment error when amount paid changes and becomes sufficient
+    React.useEffect(() => {
+        if (isPaymentSufficient && paymentError) {
+            setPaymentError('');
+        }
+        if (amountPaidNum > 0 && amountPaidNum < total) {
+            setPaymentError(`Insufficient payment. $${formatCurrency(total - amountPaidNum)} short.`);
+        } else if (paymentError && isPaymentSufficient) {
+            setPaymentError('');
+        }
+    }, [amountPaidNum, total, isPaymentSufficient, paymentError]);
+
+    const handlePrintReceipt = () => {
+        if (!completedOrder) return;
+
+        // Create a printable receipt
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(`
         <html>
           <head>
             <title>Receipt - ${completedOrder.order_number}</title>
@@ -264,12 +257,16 @@ export default function POSIndex() {
               <span>Amount Paid:</span>
               <span>$${formatCurrency(completedOrder.amount_paid)}</span>
             </div>
-            ${(completedOrder.change_amount || 0) > 0 ? `
+            ${
+                (completedOrder.change_amount || 0) > 0
+                    ? `
             <div class="row">
               <span>Change:</span>
               <span>$${formatCurrency(completedOrder.change_amount)}</span>
             </div>
-            ` : ''}
+            `
+                    : ''
+            }
             <div class="row">
               <span>Payment:</span>
               <span>${completedOrder.payment_method.toUpperCase()}</span>
@@ -280,199 +277,186 @@ export default function POSIndex() {
           </body>
         </html>
       `);
-      printWindow.document.close();
-      printWindow.print();
-    }
-  };
+            printWindow.document.close();
+            printWindow.print();
+        }
+    };
 
-  const handleCheckout = async () => {
-    if (cart.length === 0) return;
-    
-    // Clear previous errors
-    setPaymentError('');
-    setValidationErrors({});
-    
-    // Frontend validation - check if payment is sufficient
-    if (!isPaymentSufficient) {
-      setPaymentError(`Insufficient payment. Total is $${formatCurrency(total)}, but only $${formatCurrency(amountPaidNum)} was provided.`);
-      return;
-    }
-    
-    try {
-      const response = await fetch('/pos/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-        },
-        body: JSON.stringify({
-          items: cart.map(item => ({
-            product_id: item.id,
-            quantity: item.quantity
-          })),
-          payment_method: paymentMethod,
-          amount_paid: amountPaidNum,
-          discount_amount: discount,
-          discount_type: discountType,
-          discount_input: parseFloat(discountAmount) || 0,
-        }),
-      });
+    const handleCheckout = async () => {
+        if (cart.length === 0) return;
 
-      const result = await response.json();
-
-      if (response.ok) {
-        // Store cart information before clearing
-        const orderSummary = {
-          ...result.order,
-          itemCount: cart.reduce((sum, item) => sum + item.quantity, 0),
-          originalSubtotal: subtotal,
-          originalDiscount: discount,
-          change_amount: result.change_amount
-        };
-        
-        setCompletedOrder(orderSummary);
-        
-        // Clear cart completely (including localStorage)
-        clearCart();
-        
-        // Reset all form fields
-        setAmountPaid('');
-        setDiscountAmount('0');
-        setDiscountType('numerical');
-        setPaymentMethod('cash');
-        setCustomerId(undefined);
+        // Clear previous errors
         setPaymentError('');
         setValidationErrors({});
-        setSaleCompleted(true);
 
-        // Clear server backup as well
+        // Frontend validation - check if payment is sufficient
+        if (!isPaymentSufficient) {
+            setPaymentError(`Insufficient payment. Total is $${formatCurrency(total)}, but only $${formatCurrency(amountPaidNum)} was provided.`);
+            return;
+        }
+
         try {
-          await fetch('/api/pos/clear-cart', { method: 'DELETE' });
-          console.log('Cart and server backup cleared after successful sale');
+            const response = await fetch('/pos/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({
+                    items: cart.map((item) => ({
+                        product_id: item.id,
+                        quantity: item.quantity,
+                    })),
+                    payment_method: paymentMethod,
+                    amount_paid: amountPaidNum,
+                    discount_amount: discount,
+                    discount_type: discountType,
+                    discount_input: parseFloat(discountAmount) || 0,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Store cart information before clearing
+                const orderSummary = {
+                    ...result.order,
+                    itemCount: cart.reduce((sum, item) => sum + item.quantity, 0),
+                    originalSubtotal: subtotal,
+                    originalDiscount: discount,
+                    change_amount: result.change_amount,
+                };
+
+                setCompletedOrder(orderSummary);
+
+                // Clear cart completely (including localStorage)
+                clearCart();
+
+                // Reset all form fields
+                setAmountPaid('');
+                setDiscountAmount('0');
+                setDiscountType('numerical');
+                setPaymentMethod('cash');
+                setCustomerId(undefined);
+                setPaymentError('');
+                setValidationErrors({});
+                setSaleCompleted(true);
+
+                // Clear server backup as well
+                try {
+                    await fetch('/api/pos/clear-cart', { method: 'DELETE' });
+                    console.log('Cart and server backup cleared after successful sale');
+                } catch (error) {
+                    console.error('Failed to clear server backup:', error);
+                }
+            } else {
+                // Handle validation errors or payment insufficient error
+                if (result.errors) {
+                    setValidationErrors(result.errors);
+                }
+                if (result.message) {
+                    setPaymentError(result.message);
+                }
+            }
         } catch (error) {
-          console.error('Failed to clear server backup:', error);
+            console.error('Checkout error:', error);
+            setPaymentError('Failed to process order. Please try again.');
         }
-      } else {
-        // Handle validation errors or payment insufficient error
-        if (result.errors) {
-          setValidationErrors(result.errors);
-        }
-        if (result.message) {
-          setPaymentError(result.message);
-        }
-      }
-    } catch (error) {
-      console.error('Checkout error:', error);
-      setPaymentError('Failed to process order. Please try again.');
-    }
-  };
+    };
 
-  // Manual save to server
-  const handleSaveToServer = async () => {
-    if (cart.length === 0) return;
-    
-    try {
-      await saveCartToServer();
-      // You could show a toast notification here
-      console.log('Cart manually saved to server');
-    } catch (error) {
-      console.error('Failed to save cart to server:', error);
-    }
-  };
+    // Manual save to server
+    const handleSaveToServer = async () => {
+        if (cart.length === 0) return;
 
-  // Show loading state
-  if (isLoading) {
+        try {
+            await saveCartToServer();
+            // You could show a toast notification here
+            console.log('Cart manually saved to server');
+        } catch (error) {
+            console.error('Failed to save cart to server:', error);
+        }
+    };
+
+    // Show loading state
+    if (isLoading) {
+        return (
+            <AppLayout breadcrumbs={breadcrumbs}>
+                <Head title="Point of Sale" />
+                <div className="flex items-center justify-center p-6">
+                    <div className="text-center">
+                        <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+                        <p>Loading cart...</p>
+                    </div>
+                </div>
+            </AppLayout>
+        );
+    }
+
     return (
-      <AppLayout breadcrumbs={breadcrumbs}>
-        <Head title="Point of Sale" />
-        <div className="p-6 flex justify-center items-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-            <p>Loading cart...</p>
-          </div>
-        </div>
-      </AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Point of Sale" />
+
+            <div className="p-6">
+                {/* Cart Status Bar */}
+                <CartStatusBar cartItemCount={cart.length} onSaveToServer={handleSaveToServer} />
+
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                    {/* Product Selection */}
+                    <div className="space-y-4 lg:col-span-2">
+                        {/* Search Bar */}
+                        <ProductSearch searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+
+                        {/* Category Filter */}
+                        <CategoryFilter categories={categories} selectedCategory={selectedCategory} onCategoryChange={setSelectedCategory} />
+
+                        {/* Products Grid */}
+                        <ProductGrid products={filteredProducts} onAddToCart={addToCart} />
+                    </div>
+
+                    {/* Cart & Checkout */}
+                    <div className="space-y-4">
+                        <CartDisplay
+                            cart={cart}
+                            subtotal={subtotal}
+                            discountAmount={discountAmount}
+                            discountType={discountType}
+                            discount={discount}
+                            total={total}
+                            paymentMethod={paymentMethod}
+                            amountPaid={amountPaid}
+                            change={change}
+                            isPaymentSufficient={isPaymentSufficient}
+                            amountPaidNum={amountPaidNum}
+                            paymentError={paymentError}
+                            validationErrors={validationErrors}
+                            onUpdateQuantity={updateQuantity}
+                            onRemoveFromCart={removeFromCart}
+                            onDiscountAmountChange={setDiscountAmount}
+                            onDiscountTypeChange={setDiscountType}
+                            onPaymentMethodChange={setPaymentMethod}
+                            onAmountPaidChange={setAmountPaid}
+                            onCheckout={handleCheckout}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Cart Restore Dialog */}
+            <CartRestoreDialog
+                isOpen={showCartRestoreDialog}
+                cartBackupInfo={cartBackupInfo}
+                onClose={() => setShowCartRestoreDialog(false)}
+                onStartFresh={startFresh}
+                onRestore={restoreFromServerBackup}
+            />
+
+            {/* Sale Completion Modal */}
+            <SaleCompletionModal
+                isOpen={saleCompleted}
+                completedOrder={completedOrder}
+                onClose={() => setSaleCompleted(false)}
+                onPrintReceipt={handlePrintReceipt}
+            />
+        </AppLayout>
     );
-  }
-
-  return (
-    <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Point of Sale" />
-
-      <div className="p-6">
-        {/* Cart Status Bar */}
-        <CartStatusBar 
-          cartItemCount={cart.length}
-          onSaveToServer={handleSaveToServer}
-        />
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Product Selection */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Search Bar */}
-            <ProductSearch 
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-            />
-
-            {/* Category Filter */}
-            <CategoryFilter 
-              categories={categories}
-              selectedCategory={selectedCategory}
-              onCategoryChange={setSelectedCategory}
-            />
-
-            {/* Products Grid */}
-            <ProductGrid 
-              products={filteredProducts}
-              onAddToCart={addToCart}
-            />
-          </div>
-
-          {/* Cart & Checkout */}
-          <div className="space-y-4">
-            <CartDisplay 
-              cart={cart}
-              subtotal={subtotal}
-              discountAmount={discountAmount}
-              discountType={discountType}
-              discount={discount}
-              total={total}
-              paymentMethod={paymentMethod}
-              amountPaid={amountPaid}
-              change={change}
-              isPaymentSufficient={isPaymentSufficient}
-              amountPaidNum={amountPaidNum}
-              paymentError={paymentError}
-              validationErrors={validationErrors}
-              onUpdateQuantity={updateQuantity}
-              onRemoveFromCart={removeFromCart}
-              onDiscountAmountChange={setDiscountAmount}
-              onDiscountTypeChange={setDiscountType}
-              onPaymentMethodChange={setPaymentMethod}
-              onAmountPaidChange={setAmountPaid}
-              onCheckout={handleCheckout}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Cart Restore Dialog */}
-      <CartRestoreDialog 
-        isOpen={showCartRestoreDialog}
-        cartBackupInfo={cartBackupInfo}
-        onClose={() => setShowCartRestoreDialog(false)}
-        onStartFresh={startFresh}
-        onRestore={restoreFromServerBackup}
-      />
-
-      {/* Sale Completion Modal */}
-      <SaleCompletionModal 
-        isOpen={saleCompleted}
-        completedOrder={completedOrder}
-        onClose={() => setSaleCompleted(false)}
-        onPrintReceipt={handlePrintReceipt}
-      />
-    </AppLayout>
-  );
 }
