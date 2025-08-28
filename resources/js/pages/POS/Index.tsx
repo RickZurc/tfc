@@ -312,6 +312,7 @@ export default function POSIndex() {
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'Accept': 'application/json',
                 },
                 body: JSON.stringify({
                     items: cart.map((item) => ({
@@ -326,49 +327,64 @@ export default function POSIndex() {
                 }),
             });
 
+            if (!response.ok) {
+                // If response is not ok, try to parse as JSON for validation errors
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const result = await response.json();
+                    if (result.errors) {
+                        setValidationErrors(result.errors);
+                    }
+                    if (result.message) {
+                        setPaymentError(result.message);
+                    }
+                } else {
+                    // If we get HTML instead of JSON, it means there's a server error or redirect
+                    throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                }
+                return;
+            }
+
             const result = await response.json();
 
-            if (response.ok) {
-                // Store cart information before clearing
-                const orderSummary = {
-                    ...result.order,
-                    itemCount: cart.reduce((sum, item) => sum + item.quantity, 0),
-                    originalSubtotal: subtotal,
-                    originalDiscount: discount,
-                    change_amount: result.change_amount,
-                };
+            // Store cart information before clearing
+            const orderSummary = {
+                ...result.order,
+                itemCount: cart.reduce((sum, item) => sum + item.quantity, 0),
+                originalSubtotal: subtotal,
+                originalDiscount: discount,
+                change_amount: result.change_amount,
+            };
 
-                setCompletedOrder(orderSummary);
+            setCompletedOrder(orderSummary);
 
-                // Clear cart completely (including localStorage)
-                clearCart();
+            // Clear cart completely (including localStorage)
+            clearCart();
 
-                // Reset all form fields
-                setAmountPaid('');
-                setDiscountAmount('0');
-                setDiscountType('numerical');
-                setPaymentMethod('cash');
-                setCustomerId(undefined);
-                setPaymentError('');
-                setValidationErrors({});
-                setSaleCompleted(true);
+            // Reset all form fields
+            setAmountPaid('');
+            setDiscountAmount('0');
+            setDiscountType('numerical');
+            setPaymentMethod('cash');
+            setCustomerId(undefined);
+            setPaymentError('');
+            setValidationErrors({});
+            setSaleCompleted(true);
 
-                // Clear server backup as well
-                try {
-                    await fetch('/api/pos/clear-cart', { method: 'DELETE' });
-                    console.log('Cart and server backup cleared after successful sale');
-                } catch (error) {
-                    console.error('Failed to clear server backup:', error);
-                }
-            } else {
-                // Handle validation errors or payment insufficient error
-                if (result.errors) {
-                    setValidationErrors(result.errors);
-                }
-                if (result.message) {
-                    setPaymentError(result.message);
-                }
+            // Clear server backup as well
+            try {
+                await fetch('/api/pos/clear-cart', { 
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Accept': 'application/json',
+                    }
+                });
+                console.log('Cart and server backup cleared after successful sale');
+            } catch (error) {
+                console.error('Failed to clear server backup:', error);
             }
+
         } catch (error) {
             console.error('Checkout error:', error);
             setPaymentError('Failed to process order. Please try again.');
