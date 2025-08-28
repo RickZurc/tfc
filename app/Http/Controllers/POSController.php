@@ -20,6 +20,7 @@ class POSController extends Controller
 
         $products = Product::with('category')
             ->where('is_active', true)
+            ->select('id', 'name', 'price', 'sku', 'stock_quantity', 'track_stock', 'category_id')
             ->get();
 
         return Inertia::render('POS/Index', [
@@ -100,6 +101,7 @@ class POSController extends Controller
                     ->orWhere('sku', 'like', "%{$query}%")
                     ->orWhere('barcode', 'like', "%{$query}%");
             })
+            ->select('id', 'name', 'price', 'sku', 'stock_quantity', 'track_stock', 'category_id')
             ->limit(20)
             ->get();
 

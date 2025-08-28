@@ -255,30 +255,31 @@ class ProductController extends Controller
             'products.*' => 'exists:products,id',
         ]);
 
-        $products = Product::whereIn('id', $request->products);
-
         switch ($request->action) {
             case 'activate':
-                $products->update(['is_active' => true]);
+                Product::whereIn('id', $request->products)->update(['is_active' => true]);
                 $message = 'Products activated successfully.';
                 break;
 
             case 'deactivate':
-                $products->update(['is_active' => false]);
+                Product::whereIn('id', $request->products)->update(['is_active' => false]);
                 $message = 'Products deactivated successfully.';
                 break;
 
             case 'delete':
                 // Check if any products have orders
-                $productsWithOrders = $products->whereHas('orderItems')->count();
+                $productsWithOrders = Product::whereIn('id', $request->products)
+                    ->whereHas('orderItems')
+                    ->count();
+                    
                 if ($productsWithOrders > 0) {
                     return redirect()
                         ->route('products.index')
                         ->with('error', 'Some products cannot be deleted because they have been used in orders.');
                 }
 
-                $products->delete();
-                $message = 'Products deleted successfully.';
+                $deletedCount = Product::whereIn('id', $request->products)->delete();
+                $message = "{$deletedCount} product(s) deleted successfully.";
                 break;
         }
 

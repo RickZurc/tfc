@@ -14,6 +14,7 @@ interface Product {
   price: string | number;
   sku: string;
   stock_quantity: number;
+  track_stock: boolean;
   category: {
     id: number;
     name: string;
@@ -42,10 +43,10 @@ export default function ProductGrid({ products, onAddToCart }: ProductGridProps)
                   ${formatCurrency(product.price)}
                 </span>
                 <Badge 
-                  variant={product.stock_quantity > 10 ? "default" : "destructive"}
+                  variant={product.track_stock ? (product.stock_quantity > 10 ? "default" : "destructive") : "secondary"}
                   className="text-xs"
                 >
-                  {product.stock_quantity} left
+                  {product.track_stock ? `${product.stock_quantity} left` : '∞'}
                 </Badge>
               </div>
               <div className="flex items-center gap-2">

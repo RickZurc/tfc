@@ -25,6 +25,7 @@ interface Product {
   price: string | number; // Laravel returns decimals as strings
   sku: string;
   stock_quantity: number;
+  track_stock: boolean;
   category: {
     id: number;
     name: string;

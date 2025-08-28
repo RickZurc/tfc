@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { type BreadcrumbItem } from '@/types'
 import { 
     Plus, 
@@ -74,6 +75,17 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
     const [categoryFilter, setCategoryFilter] = useState(filters.category || 'all')
     const [statusFilter, setStatusFilter] = useState(filters.status || 'all')
     const [stockFilter, setStockFilter] = useState(filters.stock || 'all')
+    
+    // Dialog states
+    const [deleteDialog, setDeleteDialog] = useState<{
+        open: boolean
+        type: 'single' | 'bulk'
+        product?: Product
+        count?: number
+    }>({
+        open: false,
+        type: 'single'
+    })
 
     const handleSearch = () => {
         router.get(route('products.index'), {
@@ -114,7 +126,12 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
     const handleBulkAction = (action: string) => {
         if (selectedProducts.length === 0) return
 
-        if (action === 'delete' && !confirm(`Are you sure you want to delete ${selectedProducts.length} product(s)?`)) {
+        if (action === 'delete') {
+            setDeleteDialog({
+                open: true,
+                type: 'bulk',
+                count: selectedProducts.length
+            })
             return
         }
 
@@ -131,8 +148,42 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
     }
 
     const deleteProduct = (product: Product) => {
-        if (confirm(`Are you sure you want to delete "${product.name}"?`)) {
-            router.delete(route('products.destroy', product.id))
+        setDeleteDialog({
+            open: true,
+            type: 'single',
+            product: product
+        })
+    }
+
+    const confirmDelete = () => {
+        console.log('confirmDelete called', deleteDialog);
+        
+        if (deleteDialog.type === 'single' && deleteDialog.product) {
+            console.log('Single delete for product:', deleteDialog.product.id);
+            router.delete(route('products.destroy', deleteDialog.product.id), {
+                onSuccess: () => {
+                    console.log('Single delete success');
+                    setDeleteDialog({ open: false, type: 'single' })
+                },
+                onError: (errors) => {
+                    console.error('Single delete error:', errors);
+                }
+            })
+        } else if (deleteDialog.type === 'bulk') {
+            console.log('Bulk delete for products:', selectedProducts);
+            router.post(route('products.bulk-action'), {
+                action: 'delete',
+                products: selectedProducts,
+            }, {
+                onSuccess: () => {
+                    console.log('Bulk delete success');
+                    setSelectedProducts([])
+                    setDeleteDialog({ open: false, type: 'bulk' })
+                },
+                onError: (errors) => {
+                    console.error('Bulk delete error:', errors);
+                }
+            })
         }
     }
 
@@ -542,6 +593,47 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                     </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {deleteDialog.type === 'single' ? 'Delete Product' : 'Delete Products'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {deleteDialog.type === 'single' && deleteDialog.product ? (
+                                <>
+                                    Are you sure you want to delete "<strong>{deleteDialog.product.name}</strong>"?
+                                    <br />
+                                    This action cannot be undone.
+                                </>
+                            ) : (
+                                <>
+                                    Are you sure you want to delete <strong>{deleteDialog.count} product(s)</strong>?
+                                    <br />
+                                    This action cannot be undone.
+                                </>
+                            )}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex gap-2">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setDeleteDialog({ open: false, type: 'single' })}
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            variant="destructive" 
+                            onClick={confirmDelete}
+                        >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete {deleteDialog.type === 'bulk' ? `${deleteDialog.count} Products` : 'Product'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     )
 }
