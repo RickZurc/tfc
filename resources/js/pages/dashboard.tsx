@@ -40,7 +40,7 @@ interface Statistics {
 interface CategorySales {
     category: string;
     color: string;
-    total_sales: number;
+    total_sales: number | string;
 }
 
 interface DailySales {
@@ -104,7 +104,7 @@ function SimpleBarChart({ data, title }: { data: DailySales[]; title: string }) 
 }
 
 function PieChart({ data, title }: { data: CategorySales[]; title: string }) {
-    const total = data.reduce((sum, item) => sum + item.total_sales, 0);
+    const total = data.reduce((sum, item) => sum + parseFloat(item.total_sales.toString()), 0);
 
     return (
         <Card>
@@ -117,7 +117,8 @@ function PieChart({ data, title }: { data: CategorySales[]; title: string }) {
             <CardContent>
                 <div className="space-y-3">
                     {data.map((item, index) => {
-                        const percentage = (item.total_sales / total) * 100;
+                        const salesValue = parseFloat(item.total_sales.toString());
+                        const percentage = total > 0 ? (salesValue / total) * 100 : 0;
                         return (
                             <div key={index} className="space-y-1">
                                 <div className="flex justify-between text-sm">
@@ -125,7 +126,7 @@ function PieChart({ data, title }: { data: CategorySales[]; title: string }) {
                                         <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
                                         {item.category}
                                     </span>
-                                    <span className="font-medium">${formatCurrency(item.total_sales)}</span>
+                                    <span className="font-medium">${formatCurrency(salesValue)}</span>
                                 </div>
                                 <Progress
                                     value={percentage}

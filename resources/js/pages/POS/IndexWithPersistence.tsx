@@ -101,7 +101,6 @@ export default function POSIndexWithPersistence() {
     const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
     const [showCartRestoreDialog, setShowCartRestoreDialog] = useState(false);
     const [cartBackupInfo, setCartBackupInfo] = useState<CartBackupInfo | null>(null);
-    const [cartBackupInfo, setCartBackupInfo] = useState<CartBackupInfo | null>(null);
 
     // Check for server backup on component mount
     useEffect(() => {
