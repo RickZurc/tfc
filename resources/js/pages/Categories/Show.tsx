@@ -70,8 +70,9 @@ export default function ShowCategory() {
         setDeleteDialog(false)
     }
 
-    const formatCurrency = (value: number): string => {
-        return value.toFixed(2)
+    const formatCurrency = (value: any): string => {
+        const num = typeof value === 'string' ? parseFloat(value) : value;
+        return isNaN(num) || num === null || num === undefined ? '0.00' : num.toFixed(2);
     }
 
     const formatDate = (dateString: string): string => {

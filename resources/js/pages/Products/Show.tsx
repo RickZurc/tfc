@@ -56,7 +56,7 @@ interface Order {
     total_amount: string
     status: string
     created_at: string
-    customer: Customer
+    customer: Customer | null
 }
 
 interface OrderItem {
@@ -323,7 +323,7 @@ export default function ProductShow({ product, recentOrders, statistics }: Props
                                                         Order #{orderItem.order.id}
                                                     </p>
                                                     <p className="text-sm text-muted-foreground">
-                                                        {orderItem.order.customer.name} • {formatDate(orderItem.order.created_at)}
+                                                        {orderItem.order.customer?.name || 'Guest'} • {formatDate(orderItem.order.created_at)}
                                                     </p>
                                                 </div>
                                                 <div className="text-right">
