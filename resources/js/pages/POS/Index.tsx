@@ -358,7 +358,10 @@ export default function POSIndex() {
         
         // Clear cart completely (including localStorage)
         clearCart();
-        
+
+        // CClear search query
+        setSearchQuery('');
+
         // Reset all form fields
         setAmountPaid('');
         setDiscountAmount('0');
