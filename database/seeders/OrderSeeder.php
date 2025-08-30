@@ -28,9 +28,17 @@ class OrderSeeder extends Seeder
         // Create a variety of orders with different statuses
         $orders = collect();
 
+        // Generate random number of total orders between 80 and 200
+        $totalOrders = fake()->numberBetween(80, 200);
+        
+        // Calculate proportional counts
+        $completedCount = (int) round($totalOrders * 0.70); // 70%
+        $pendingCount = (int) round($totalOrders * 0.20);   // 20%
+        $refundedCount = $totalOrders - $completedCount - $pendingCount; // Remaining ~10%
+
         // Create completed orders (70%)
         $completedOrders = Order::factory()
-            ->count(14)
+            ->count($completedCount)
             ->completed()
             ->create([
                 'customer_id' => fn() => $customers->random()->id,
@@ -40,7 +48,7 @@ class OrderSeeder extends Seeder
 
         // Create pending orders (20%)
         $pendingOrders = Order::factory()
-            ->count(4)
+            ->count($pendingCount)
             ->pending()
             ->create([
                 'customer_id' => fn() => $customers->random()->id,
@@ -48,9 +56,9 @@ class OrderSeeder extends Seeder
             ]);
         $orders = $orders->merge($pendingOrders);
 
-        // Create refunded orders (10%)
+        // Create refunded orders (~10%)
         $refundedOrders = Order::factory()
-            ->count(2)
+            ->count($refundedCount)
             ->create([
                 'customer_id' => fn() => $customers->random()->id,
                 'user_id' => fn() => $users->random()->id,
@@ -68,13 +76,13 @@ class OrderSeeder extends Seeder
             ]);
         $orders = $orders->merge($refundedOrders);
 
-        $this->command->info('Created ' . $orders->count() . ' orders:');
+        $this->command->info('Created ' . $orders->count() . ' orders (Target: ' . $totalOrders . '):');
         $this->command->table(
-            ['Status', 'Count'],
+            ['Status', 'Count', 'Percentage'],
             [
-                ['Completed', $orders->where('status', 'completed')->count()],
-                ['Pending', $orders->where('status', 'pending')->count()],
-                ['Refunded', $orders->where('status', 'refunded')->count()],
+                ['Completed', $orders->where('status', 'completed')->count(), round(($orders->where('status', 'completed')->count() / $orders->count()) * 100, 1) . '%'],
+                ['Pending', $orders->where('status', 'pending')->count(), round(($orders->where('status', 'pending')->count() / $orders->count()) * 100, 1) . '%'],
+                ['Refunded', $orders->where('status', 'refunded')->count(), round(($orders->where('status', 'refunded')->count() / $orders->count()) * 100, 1) . '%'],
             ]
         );
 
