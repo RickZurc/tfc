@@ -65,10 +65,8 @@ class POSController extends Controller
             // Use discounted price if available
             $unitPrice = $product->getCurrentPrice();
 
-            // Reduce stock if the product tracks stock
-            if ($product->track_stock) {
-                $product->decrement('stock_quantity', $item['quantity']);
-            }
+            // Stock will be decremented when order is marked as completed
+            // No need to decrement here to avoid double stock reduction
 
             $orderItem = OrderItem::create([
                 'order_id' => $order->id,
