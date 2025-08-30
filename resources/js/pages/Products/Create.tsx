@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DateTimePicker } from '@/components/ui/datetime-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -516,11 +517,10 @@ export default function ProductCreate({ categories }: Props) {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
                                                     <Label htmlFor="discount_starts_at">Start Date & Time</Label>
-                                                    <Input
-                                                        id="discount_starts_at"
-                                                        type="datetime-local"
+                                                    <DateTimePicker
                                                         value={formData.discount_starts_at}
-                                                        onChange={(e) => handleChange('discount_starts_at', e.target.value)}
+                                                        onChange={(value) => handleChange('discount_starts_at', value || '')}
+                                                        placeholder="Select start date and time"
                                                         className={errors.discount_starts_at ? 'border-destructive' : ''}
                                                     />
                                                     {errors.discount_starts_at && <p className="mt-1 text-sm text-destructive">{errors.discount_starts_at}</p>}
@@ -528,11 +528,10 @@ export default function ProductCreate({ categories }: Props) {
 
                                                 <div>
                                                     <Label htmlFor="discount_ends_at">End Date & Time</Label>
-                                                    <Input
-                                                        id="discount_ends_at"
-                                                        type="datetime-local"
+                                                    <DateTimePicker
                                                         value={formData.discount_ends_at}
-                                                        onChange={(e) => handleChange('discount_ends_at', e.target.value)}
+                                                        onChange={(value) => handleChange('discount_ends_at', value || '')}
+                                                        placeholder="Select end date and time"
                                                         className={errors.discount_ends_at ? 'border-destructive' : ''}
                                                     />
                                                     {errors.discount_ends_at && <p className="mt-1 text-sm text-destructive">{errors.discount_ends_at}</p>}
