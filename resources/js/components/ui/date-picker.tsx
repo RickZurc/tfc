@@ -20,6 +20,7 @@ interface DatePickerProps {
   className?: string
   disabled?: boolean
   disableFutureDates?: boolean
+  disabledDates?: (date: Date) => boolean
 }
 
 export function DatePicker({
@@ -29,13 +30,16 @@ export function DatePicker({
   className,
   disabled,
   disableFutureDates = false,
+  disabledDates,
 }: DatePickerProps) {
   const today = new Date()
   today.setHours(0, 0, 0, 0) // Set to start of day for accurate comparison
 
-  const isDateDisabled = disableFutureDates 
-    ? (date: Date) => date > today
-    : undefined
+  const isDateDisabled = (date: Date) => {
+    if (disableFutureDates && date > today) return true
+    if (disabledDates && disabledDates(date)) return true
+    return false
+  }
 
   return (
     <Popover>

@@ -38,6 +38,7 @@ class OrderFactory extends Factory
             'change_amount' => max(0, $amountPaid - $totalAmount),
             'notes' => $this->faker->optional()->sentence(),
             'completed_at' => $this->faker->optional(0.8)->dateTimeThisMonth(),
+            'created_at' => $this->faker->dateTimeBetween('-2 months', 'now'),
         ];
     }
 
