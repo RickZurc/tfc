@@ -14,26 +14,13 @@ import {
   Calculator, 
   CheckCircle 
 } from 'lucide-react';
+import { CartItem } from '@/types/pos';
 
 // Helper function to safely format currency
 const formatCurrency = (value: any): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value;
   return isNaN(num) ? '0.00' : num.toFixed(2);
 };
-
-interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  total: number;
-  
-  // Discount fields
-  has_active_discount?: boolean;
-  current_price?: number;
-  discount_amount?: number;
-  discount_percentage?: number;
-}
 
 type PaymentMethod = 'cash' | 'card' | 'digital';
 

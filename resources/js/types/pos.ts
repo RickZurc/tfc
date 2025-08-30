@@ -5,13 +5,17 @@ export interface CartItem {
     price: number
     quantity: number
     total: number
-    sku: string
+    sku?: string
     stock_quantity: number
-    category: {
-        id: number
-        name: string
-        color: string
-    }
+    track_stock: boolean
+    category_id?: number
+    category?: Category
+    
+    // Include discount fields that might come from Product
+    has_active_discount?: boolean
+    current_price?: number
+    discount_amount?: number
+    discount_percentage?: number
 }
 
 export interface Customer {

@@ -3,7 +3,7 @@ import { Head, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { usePersistedCart } from '@/hooks/usePersistedCart';
-import { Product } from '@/types/pos';
+import { Product, CartItem } from '@/types/pos';
 
 // POS Components
 import ProductSearch from '@/components/pos/ProductSearch';
@@ -27,12 +27,6 @@ interface Category {
   color: string;
   icon: string;
   products: Product[];
-}
-
-interface CartItem extends Product {
-  quantity: number;
-  total: number;
-  price: number; // Ensure cart items have numeric price
 }
 
 interface PageProps extends Record<string, unknown> {

@@ -1,19 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-
-interface CartItem {
-    id: number;
-    name: string;
-    price: number;
-    quantity: number;
-    total: number;
-    sku: string;
-    stock_quantity: number;
-    category: {
-        id: number;
-        name: string;
-        color: string;
-    };
-}
+import { CartItem } from '@/types/pos';
 
 interface CartState {
     items: CartItem[];
