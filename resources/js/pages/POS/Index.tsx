@@ -31,6 +31,12 @@ interface Product {
     name: string;
     color: string;
   };
+  
+  // Discount fields
+  has_active_discount?: boolean;
+  current_price?: number;
+  discount_amount?: number;
+  discount_percentage?: number;
 }
 
 interface Category {
@@ -172,7 +178,8 @@ export default function POSIndex() {
 
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.id === product.id);
-      const price = parseFloat(product.price.toString()); // Ensure price is a number
+      // Use current_price if available (discounted), otherwise use regular price
+      const price = product.current_price ?? parseFloat(product.price.toString());
       
       if (existingItem) {
         // Check if adding another quantity would exceed stock

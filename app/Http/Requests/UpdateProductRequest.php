@@ -41,6 +41,14 @@ class UpdateProductRequest extends FormRequest
             'dimensions' => ['nullable', 'string', 'max:100'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'is_active' => ['boolean'],
+            
+            // Discount fields
+            'discount_active' => ['boolean'],
+            'discount_type' => ['nullable', 'required_if:discount_active,true', 'in:percentage,fixed'],
+            'discount_percentage' => ['nullable', 'required_if:discount_type,percentage', 'numeric', 'min:0', 'max:100'],
+            'discount_amount' => ['nullable', 'required_if:discount_type,fixed', 'numeric', 'min:0'],
+            'discount_starts_at' => ['nullable', 'required_if:discount_active,true', 'date'],
+            'discount_ends_at' => ['nullable', 'required_if:discount_active,true', 'date', 'after:discount_starts_at'],
         ];
     }
 
@@ -61,6 +69,16 @@ class UpdateProductRequest extends FormRequest
             'barcode.unique' => 'This barcode is already in use.',
             'stock_quantity.required_if' => 'Stock quantity is required when stock tracking is enabled.',
             'min_stock_level.required_if' => 'Minimum stock level is required when stock tracking is enabled.',
+            
+            // Discount messages
+            'discount_type.required_if' => 'Discount type is required when discount is active.',
+            'discount_type.in' => 'Discount type must be either percentage or fixed amount.',
+            'discount_percentage.required_if' => 'Discount percentage is required for percentage discounts.',
+            'discount_percentage.max' => 'Discount percentage cannot exceed 100%.',
+            'discount_amount.required_if' => 'Discount amount is required for fixed amount discounts.',
+            'discount_starts_at.required_if' => 'Discount start date is required when discount is active.',
+            'discount_ends_at.required_if' => 'Discount end date is required when discount is active.',
+            'discount_ends_at.after' => 'Discount end date must be after the start date.',
         ];
     }
 }

@@ -150,7 +150,9 @@ class StorePOSOrderRequest extends FormRequest
         foreach ($this->items as $item) {
             $product = Product::find($item['product_id']);
             if ($product) {
-                $subtotal += $product->price * $item['quantity'];
+                // Use discounted price if available
+                $price = $product->getCurrentPrice();
+                $subtotal += $price * $item['quantity'];
             }
         }
 

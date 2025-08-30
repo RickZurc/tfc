@@ -20,7 +20,16 @@ class POSController extends Controller
 
         $products = Product::with('category')
             ->where('is_active', true)
-            ->get();
+            ->get()
+            ->map(function ($product) {
+                // Add discount information to each product
+                return $product->append([
+                    'has_active_discount',
+                    'current_price',
+                    'discount_amount',
+                    'discount_percentage'
+                ]);
+            });
 
         return Inertia::render('POS/Index', [
             'categories' => $categories,
@@ -53,6 +62,9 @@ class POSController extends Controller
         foreach ($request->items as $item) {
             $product = Product::find($item['product_id']);
 
+            // Use discounted price if available
+            $unitPrice = $product->getCurrentPrice();
+
             // Reduce stock if the product tracks stock
             if ($product->track_stock) {
                 $product->decrement('stock_quantity', $item['quantity']);
@@ -63,11 +75,11 @@ class POSController extends Controller
                 'product_id' => $product->id,
                 'product_name' => $product->name,
                 'product_sku' => $product->sku,
-                'unit_price' => $product->price,
+                'unit_price' => $unitPrice,
                 'quantity' => $item['quantity'],
-                'total_price' => $product->price * $item['quantity'],
+                'total_price' => $unitPrice * $item['quantity'],
                 'tax_rate' => $product->tax_rate,
-                'tax_amount' => ($product->price * $item['quantity'] * $product->tax_rate) / 100,
+                'tax_amount' => ($unitPrice * $item['quantity'] * $product->tax_rate) / 100,
             ]);
         }
 

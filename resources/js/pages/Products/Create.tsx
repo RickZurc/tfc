@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Barcode, DollarSign, Package, Save, Settings } from 'lucide-react';
+import { ArrowLeft, Barcode, DollarSign, Package, Save, Settings, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { DynamicIcon } from '@/components/ui/dynamic-icon';
 
@@ -39,6 +39,14 @@ interface FormData {
     max_stock_level: string;
     is_active: boolean;
     tax_rate: string;
+    
+    // Discount fields
+    discount_active: boolean;
+    discount_type: string;
+    discount_percentage: string;
+    discount_amount: string;
+    discount_starts_at: string;
+    discount_ends_at: string;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -70,6 +78,14 @@ export default function ProductCreate({ categories }: Props) {
         max_stock_level: '',
         is_active: true,
         tax_rate: '0',
+        
+        // Discount fields
+        discount_active: false,
+        discount_type: 'percentage',
+        discount_percentage: '',
+        discount_amount: '',
+        discount_starts_at: '',
+        discount_ends_at: '',
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -172,7 +188,7 @@ export default function ProductCreate({ categories }: Props) {
                                                     <SelectItem key={category.id} value={category.id.toString()}>
                                                         <div className="flex items-center gap-2">
                                                             <div className="h-3 w-3 rounded-full" style={{ backgroundColor: category.color }} />
-                                                            <DynamicIcon name={category.icon} className="h-4 w-4" />
+                                                            <DynamicIcon name={category.icon || null} className="h-4 w-4" />
                                                             {category.name}
                                                         </div>
                                                     </SelectItem>
@@ -418,6 +434,109 @@ export default function ProductCreate({ categories }: Props) {
                                                     placeholder="0"
                                                 />
                                                 <p className="mt-1 text-xs text-muted-foreground">Optional maximum stock level for reordering</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+
+                            {/* Limited Time Discount Card */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Zap className="h-5 w-5" />
+                                        Limited Time Discount
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="discount_active"
+                                            checked={formData.discount_active}
+                                            onCheckedChange={(checked) => handleChange('discount_active', Boolean(checked))}
+                                        />
+                                        <Label htmlFor="discount_active" className="text-sm font-medium">
+                                            Enable Limited Time Discount
+                                        </Label>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">Set a temporary discount for this product</p>
+
+                                    {formData.discount_active && (
+                                        <div className="space-y-4 border-t pt-4">
+                                            <div>
+                                                <Label htmlFor="discount_type">Discount Type</Label>
+                                                <Select 
+                                                    value={formData.discount_type} 
+                                                    onValueChange={(value) => handleChange('discount_type', value)}
+                                                >
+                                                    <SelectTrigger className={errors.discount_type ? 'border-destructive' : ''}>
+                                                        <SelectValue placeholder="Select discount type" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="percentage">Percentage (%)</SelectItem>
+                                                        <SelectItem value="fixed">Fixed Amount ($)</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                {errors.discount_type && <p className="mt-1 text-sm text-destructive">{errors.discount_type}</p>}
+                                            </div>
+
+                                            {formData.discount_type === 'percentage' ? (
+                                                <div>
+                                                    <Label htmlFor="discount_percentage">Discount Percentage (%)</Label>
+                                                    <Input
+                                                        id="discount_percentage"
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        step="0.01"
+                                                        value={formData.discount_percentage}
+                                                        onChange={(e) => handleChange('discount_percentage', e.target.value)}
+                                                        placeholder="0.00"
+                                                        className={errors.discount_percentage ? 'border-destructive' : ''}
+                                                    />
+                                                    {errors.discount_percentage && <p className="mt-1 text-sm text-destructive">{errors.discount_percentage}</p>}
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <Label htmlFor="discount_amount">Discount Amount ($)</Label>
+                                                    <Input
+                                                        id="discount_amount"
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        value={formData.discount_amount}
+                                                        onChange={(e) => handleChange('discount_amount', e.target.value)}
+                                                        placeholder="0.00"
+                                                        className={errors.discount_amount ? 'border-destructive' : ''}
+                                                    />
+                                                    {errors.discount_amount && <p className="mt-1 text-sm text-destructive">{errors.discount_amount}</p>}
+                                                </div>
+                                            )}
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <Label htmlFor="discount_starts_at">Start Date & Time</Label>
+                                                    <Input
+                                                        id="discount_starts_at"
+                                                        type="datetime-local"
+                                                        value={formData.discount_starts_at}
+                                                        onChange={(e) => handleChange('discount_starts_at', e.target.value)}
+                                                        className={errors.discount_starts_at ? 'border-destructive' : ''}
+                                                    />
+                                                    {errors.discount_starts_at && <p className="mt-1 text-sm text-destructive">{errors.discount_starts_at}</p>}
+                                                </div>
+
+                                                <div>
+                                                    <Label htmlFor="discount_ends_at">End Date & Time</Label>
+                                                    <Input
+                                                        id="discount_ends_at"
+                                                        type="datetime-local"
+                                                        value={formData.discount_ends_at}
+                                                        onChange={(e) => handleChange('discount_ends_at', e.target.value)}
+                                                        className={errors.discount_ends_at ? 'border-destructive' : ''}
+                                                    />
+                                                    {errors.discount_ends_at && <p className="mt-1 text-sm text-destructive">{errors.discount_ends_at}</p>}
+                                                </div>
                                             </div>
                                         </div>
                                     )}
