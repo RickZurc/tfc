@@ -173,8 +173,9 @@ class Product extends Model
         }
 
         // Calculate percentage for fixed amount discounts
-        if ($this->price > 0) {
-            return ($this->getDiscountAmount() / $this->price) * 100;
+        if ($this->discount_type === 'fixed' && $this->price > 0) {
+            $amount = (float) $this->getAttributes()['discount_amount'] ?? 0;
+            return ($amount / $this->price) * 100;
         }
 
         return 0;

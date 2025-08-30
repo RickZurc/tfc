@@ -56,8 +56,8 @@ class OrderItemSeeder extends Seeder
                 $orderTaxAmount += $taxAmount;
                 $totalItems++;
 
-                // Update product stock if tracking
-                if ($product->track_stock) {
+                // Update product stock if tracking (only if we have enough stock)
+                if ($product->track_stock && $product->stock_quantity >= $quantity) {
                     $product->decrement('stock_quantity', $quantity);
                 }
             }
