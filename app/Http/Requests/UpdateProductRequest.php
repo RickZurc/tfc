@@ -42,14 +42,46 @@ class UpdateProductRequest extends FormRequest
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'is_active' => ['boolean'],
             
-            // Discount fields
-            'discount_active' => ['boolean'],
-            'discount_type' => ['nullable', 'required_if:discount_active,true', 'in:percentage,fixed'],
-            'discount_percentage' => ['nullable', 'required_if:discount_type,percentage', 'numeric', 'min:0', 'max:100'],
-            'discount_amount' => ['nullable', 'required_if:discount_type,fixed', 'numeric', 'min:0'],
-            'discount_starts_at' => ['nullable', 'required_if:discount_active,true', 'date'],
-            'discount_ends_at' => ['nullable', 'required_if:discount_active,true', 'date', 'after:discount_starts_at'],
+            // Discount fields handled conditionally below
+            'discount_active' => ['sometimes', 'boolean'],
         ];
+        
+        // Normalize incoming discount_active to boolean-ish value
+        $discountActiveRaw = $this->input('discount_active');
+        $discountActive = filter_var($discountActiveRaw, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+
+        // If discount is active (true-ish), apply stricter rules. We allow different representations
+        // of boolean values from the request ("true", "1", 1, "on", etc.).
+        if ($discountActive === true) {
+            $rules['discount_type'] = ['required', 'in:percentage,fixed'];
+
+            // If discount type is percentage, require percentage field
+            $discountType = $this->input('discount_type');
+            if ($discountType === 'percentage') {
+                $rules['discount_percentage'] = ['required', 'numeric', 'min:0', 'max:100'];
+                // discount_amount is not required in this case, allow nullable
+                $rules['discount_amount'] = ['nullable', 'numeric', 'min:0'];
+            } elseif ($discountType === 'fixed') {
+                $rules['discount_amount'] = ['required', 'numeric', 'min:0'];
+                $rules['discount_percentage'] = ['nullable', 'numeric', 'min:0', 'max:100'];
+            } else {
+                // If discount_type is not provided yet, validate both as nullable and let discount_type rule catch missing type
+                $rules['discount_percentage'] = ['nullable', 'numeric', 'min:0', 'max:100'];
+                $rules['discount_amount'] = ['nullable', 'numeric', 'min:0'];
+            }
+
+            $rules['discount_starts_at'] = ['required', 'date'];
+            $rules['discount_ends_at'] = ['required', 'date', 'after:discount_starts_at'];
+        } else {
+            // Discount not active: make discount fields nullable
+            $rules['discount_type'] = ['nullable', 'in:percentage,fixed'];
+            $rules['discount_percentage'] = ['nullable', 'numeric', 'min:0', 'max:100'];
+            $rules['discount_amount'] = ['nullable', 'numeric', 'min:0'];
+            $rules['discount_starts_at'] = ['nullable', 'date'];
+            $rules['discount_ends_at'] = ['nullable', 'date'];
+        }
+
+        return $rules;
     }
 
     /**
