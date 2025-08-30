@@ -437,6 +437,8 @@ export default function POSIndex() {
             <ProductSearch 
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
+              filteredProducts={filteredProducts}
+              onAddToCart={addToCart}
             />
 
             {/* Category Filter */}
