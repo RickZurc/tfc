@@ -42,6 +42,19 @@ class Product extends Model
         'tax_rate',
     ];
 
+    /**
+     * The attributes that should be validated before saving.
+     */
+    public static function rules(): array
+    {
+        return [
+            'stock_quantity' => 'integer|min:0',
+            'min_stock_level' => 'integer|min:0',
+            'price' => 'numeric|min:0',
+            'cost_price' => 'nullable|numeric|min:0',
+        ];
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);

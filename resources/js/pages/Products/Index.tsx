@@ -10,7 +10,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { Edit, Eye, Filter, MoreHorizontal, Package, Plus, Power, Search, Trash2, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Category {
     id: number;
@@ -65,6 +65,31 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
     const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
     const [stockFilter, setStockFilter] = useState(filters.stock || 'all');
 
+    // Auto-apply filters when they change
+    useEffect(() => {
+        const params: Record<string, string> = {};
+        
+        if (searchTerm) params.search = searchTerm;
+        if (categoryFilter !== 'all') params.category = categoryFilter;
+        if (statusFilter !== 'all') params.status = statusFilter;
+        if (stockFilter !== 'all') params.stock = stockFilter;
+
+        // Don't make request if this is the initial load
+        const hasParams = Object.keys(params).length > 0;
+        const currentHasParams = (filters.search || filters.category || filters.status || filters.stock);
+        
+        if (hasParams || currentHasParams) {
+            const timeoutId = setTimeout(() => {
+                router.get('/products', params, {
+                    preserveState: true,
+                    preserveScroll: true,
+                });
+            }, 300); // Debounce by 300ms
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [searchTerm, categoryFilter, statusFilter, stockFilter]);
+
     // Dialog states
     const [deleteDialog, setDeleteDialog] = useState<{
         open: boolean;
@@ -77,19 +102,17 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
     });
 
     const handleSearch = () => {
-        router.get(
-            route('products.index'),
-            {
-                search: searchTerm,
-                category: categoryFilter === 'all' ? '' : categoryFilter,
-                status: statusFilter === 'all' ? '' : statusFilter,
-                stock: stockFilter === 'all' ? '' : stockFilter,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
+        const params: Record<string, string> = {};
+        
+        if (searchTerm) params.search = searchTerm;
+        if (categoryFilter !== 'all') params.category = categoryFilter;
+        if (statusFilter !== 'all') params.status = statusFilter;
+        if (stockFilter !== 'all') params.stock = stockFilter;
+
+        router.get('/products', params, {
+            preserveState: true,
+            preserveScroll: true,
+        });
     };
 
     const clearFilters = () => {
@@ -97,7 +120,7 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
         setCategoryFilter('all');
         setStatusFilter('all');
         setStockFilter('all');
-        router.get(route('products.index'));
+        router.get('/products');
     };
 
     const toggleSelectAll = () => {
