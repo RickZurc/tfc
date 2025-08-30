@@ -1,31 +1,13 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Product } from '@/types/pos';
 
 // Helper function to safely format currency
 const formatCurrency = (value: any): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value;
   return isNaN(num) ? '0.00' : num.toFixed(2);
 };
-
-interface Product {
-  id: number;
-  name: string;
-  price: string | number;
-  sku: string;
-  stock_quantity: number;
-  category: {
-    id: number;
-    name: string;
-    color: string;
-  };
-  
-  // Discount fields
-  has_active_discount?: boolean;
-  current_price?: number;
-  discount_amount?: number;
-  discount_percentage?: number;
-}
 
 interface ProductGridProps {
   products: Product[];
@@ -68,19 +50,19 @@ export default function ProductGrid({ products, onAddToCart }: ProductGridProps)
                   )}
                 </div>
                 <Badge 
-                  variant={product.stock_quantity > 10 ? "default" : "destructive"}
+                  variant={product.track_stock && product.stock_quantity <= 10 ? "destructive" : "default"}
                   className="text-xs"
                 >
-                  {product.stock_quantity} left
+                  {product.track_stock ? `${product.stock_quantity} left` : '∞'}
                 </Badge>
               </div>
               
               <div className="flex items-center gap-2">
                 <div 
                   className="w-2 h-2 rounded-full" 
-                  style={{ backgroundColor: product.category.color }}
+                  style={{ backgroundColor: product.category?.color || '#gray' }}
                 />
-                <span className="text-xs text-muted-foreground">{product.category.name}</span>
+                <span className="text-xs text-muted-foreground">{product.category?.name || 'No Category'}</span>
               </div>
             </div>
           </CardContent>

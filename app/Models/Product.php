@@ -102,16 +102,16 @@ class Product extends Model
 
     public function hasActiveDiscount(): bool
     {
-        if (!$this->discount_active) {
+        if (! $this->discount_active) {
             return false;
         }
 
         $now = now();
-        
+
         if ($this->discount_starts_at && $this->discount_starts_at > $now) {
             return false;
         }
-        
+
         if ($this->discount_ends_at && $this->discount_ends_at < $now) {
             return false;
         }
@@ -124,15 +124,17 @@ class Product extends Model
      */
     public function getDiscountedPrice(): float
     {
-        if (!$this->hasActiveDiscount()) {
+        if (! $this->hasActiveDiscount()) {
             return $this->price;
         }
 
         if ($this->discount_type === 'percentage') {
             $percentage = (float) $this->getAttributes()['discount_percentage'] ?? 0;
+
             return $this->price * (1 - ($percentage / 100));
         } elseif ($this->discount_type === 'fixed') {
             $amount = (float) $this->getAttributes()['discount_amount'] ?? 0;
+
             return max(0, $this->price - $amount);
         }
 
@@ -152,7 +154,7 @@ class Product extends Model
      */
     public function getDiscountAmount(): float
     {
-        if (!$this->hasActiveDiscount()) {
+        if (! $this->hasActiveDiscount()) {
             return 0;
         }
 
@@ -164,7 +166,7 @@ class Product extends Model
      */
     public function getDiscountPercentage(): float
     {
-        if (!$this->hasActiveDiscount()) {
+        if (! $this->hasActiveDiscount()) {
             return 0;
         }
 
@@ -175,6 +177,7 @@ class Product extends Model
         // Calculate percentage for fixed amount discounts
         if ($this->discount_type === 'fixed' && $this->price > 0) {
             $amount = (float) $this->getAttributes()['discount_amount'] ?? 0;
+
             return ($amount / $this->price) * 100;
         }
 
@@ -186,7 +189,7 @@ class Product extends Model
      */
     public function isDiscountExpiringSoon(): bool
     {
-        if (!$this->hasActiveDiscount() || !$this->discount_ends_at) {
+        if (! $this->hasActiveDiscount() || ! $this->discount_ends_at) {
             return false;
         }
 

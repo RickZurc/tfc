@@ -3,6 +3,7 @@ import { Head, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { usePersistedCart } from '@/hooks/usePersistedCart';
+import { Product } from '@/types/pos';
 
 // POS Components
 import ProductSearch from '@/components/pos/ProductSearch';
@@ -19,25 +20,6 @@ const formatCurrency = (value: any): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value;
   return isNaN(num) ? '0.00' : num.toFixed(2);
 };
-
-interface Product {
-  id: number;
-  name: string;
-  price: string | number; // Laravel returns decimals as strings
-  sku: string;
-  stock_quantity: number;
-  category: {
-    id: number;
-    name: string;
-    color: string;
-  };
-  
-  // Discount fields
-  has_active_discount?: boolean;
-  current_price?: number;
-  discount_amount?: number;
-  discount_percentage?: number;
-}
 
 interface Category {
   id: number;
@@ -135,7 +117,6 @@ export default function POSIndex() {
         setPaymentMethod(backupData.paymentMethod || 'cash');
         setCustomerId(backupData.customerId);
         
-        console.log('Cart restored from server backup');
       }
     } catch (error) {
       console.error('Failed to restore cart from server:', error);
@@ -158,19 +139,18 @@ export default function POSIndex() {
     // Close the restore dialog
     setShowCartRestoreDialog(false);
     
-    console.log('Cart cleared - starting fresh');
   };
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         product.sku.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === null || product.category.id === selectedCategory;
+                         (product.sku || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === null || product.category?.id === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
   const addToCart = (product: Product) => {
     // Check if product is out of stock
-    if ((product as any).track_stock && product.stock_quantity <= 0) {
+    if (product.track_stock && product.stock_quantity <= 0) {
       setOutOfStockProduct(product.name);
       setShowOutOfStockDialog(true);
       return;
@@ -183,7 +163,7 @@ export default function POSIndex() {
       
       if (existingItem) {
         // Check if adding another quantity would exceed stock
-        if ((product as any).track_stock && (existingItem.quantity + 1) > product.stock_quantity) {
+        if (product.track_stock && (existingItem.quantity + 1) > product.stock_quantity) {
           setOutOfStockProduct(product.name);
           setShowOutOfStockDialog(true);
           return prevCart; // Don't add to cart
@@ -196,13 +176,19 @@ export default function POSIndex() {
         );
       } else {
         // Check stock for new item
-        if ((product as any).track_stock && product.stock_quantity < 1) {
+        if (product.track_stock && product.stock_quantity < 1) {
           setOutOfStockProduct(product.name);
           setShowOutOfStockDialog(true);
           return prevCart; // Don't add to cart
         }
         
-        return [...prevCart, { ...product, price, quantity: 1, total: price }];
+        const cartItem: CartItem = { 
+          ...product, 
+          price, 
+          quantity: 1, 
+          total: price 
+        };
+        return [...prevCart, cartItem];
       }
     });
   };

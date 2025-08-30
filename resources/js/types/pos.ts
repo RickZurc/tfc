@@ -24,12 +24,18 @@ export interface Customer {
 export interface Product {
     id: number
     name: string
-    price: number
+    price: string | number  // Laravel returns decimals as strings
     category_id?: number
     category?: Category
     stock_quantity: number
-    track_stock?: boolean
+    track_stock: boolean
     sku?: string
+    
+    // Discount fields
+    has_active_discount?: boolean
+    current_price?: number
+    discount_amount?: number
+    discount_percentage?: number
 }
 
 export interface Category {

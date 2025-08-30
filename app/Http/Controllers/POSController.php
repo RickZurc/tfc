@@ -20,16 +20,7 @@ class POSController extends Controller
 
         $products = Product::with('category')
             ->where('is_active', true)
-            ->get()
-            ->map(function ($product) {
-                // Add discount information to each product
-                return $product->append([
-                    'has_active_discount',
-                    'current_price',
-                    'discount_amount',
-                    'discount_percentage'
-                ]);
-            });
+            ->get();
 
         return Inertia::render('POS/Index', [
             'categories' => $categories,

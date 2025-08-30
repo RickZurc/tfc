@@ -80,7 +80,6 @@ export function usePersistedCart() {
             };
 
             localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartState));
-            console.log('Cart saved to storage:', cart.length, 'items');
         } catch (error) {
             console.error('Error saving cart to storage:', error);
             // Handle quota exceeded error

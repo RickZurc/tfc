@@ -40,12 +40,12 @@ class StoreProductRequest extends FormRequest
             'is_active' => ['boolean'],
             
             // Discount fields
-            'discount_active' => ['boolean'],
-            'discount_type' => ['nullable', 'required_if:discount_active,true', 'in:percentage,fixed'],
-            'discount_percentage' => ['nullable', 'required_if:discount_type,percentage', 'numeric', 'min:0', 'max:100'],
-            'discount_amount' => ['nullable', 'required_if:discount_type,fixed', 'numeric', 'min:0'],
-            'discount_starts_at' => ['nullable', 'required_if:discount_active,true', 'date', 'after_or_equal:today'],
-            'discount_ends_at' => ['nullable', 'required_if:discount_active,true', 'date', 'after:discount_starts_at'],
+            // 'discount_active' => ['boolean'],
+            // 'discount_type' => ['nullable', 'required_if:discount_active,true', 'in:percentage,fixed'],
+            // 'discount_percentage' => ['nullable', 'required_if:discount_type,percentage', 'numeric', 'min:0', 'max:100'],
+            // 'discount_amount' => ['nullable', 'required_if:discount_type,fixed', 'numeric', 'min:0'],
+            // 'discount_starts_at' => ['nullable', 'required_if:discount_active,true', 'date', 'after_or_equal:today'],
+            // 'discount_ends_at' => ['nullable', 'required_if:discount_active,true', 'date', 'after:discount_starts_at'],
         ];
     }
 
