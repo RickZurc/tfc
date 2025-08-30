@@ -43,6 +43,7 @@ class StorePOSOrderRequest extends FormRequest
     {
         $validator->after(function (Validator $validator) {
             $this->validatePaymentAmount($validator);
+            $this->validateStockQuantity($validator);
         });
     }
 
@@ -77,6 +78,38 @@ class StorePOSOrderRequest extends FormRequest
                     number_format($total - $this->amount_paid, 2)
                 )
             );
+        }
+    }
+
+    /**
+     * Validate that sufficient stock is available for all items.
+     */
+    protected function validateStockQuantity(Validator $validator): void
+    {
+        if ($validator->errors()->any()) {
+            return; // Don't validate stock if other validation failed
+        }
+
+        foreach ($this->items as $index => $item) {
+            $product = Product::find($item['product_id']);
+            if (!$product) {
+                continue; // Product validation will catch this
+            }
+
+            // Only validate stock for products that track stock
+            if ($product->track_stock) {
+                if ($product->stock_quantity <= 0) {
+                    $validator->errors()->add(
+                        "items.{$index}.quantity",
+                        "The product '{$product->name}' is out of stock."
+                    );
+                } elseif ($item['quantity'] > $product->stock_quantity) {
+                    $validator->errors()->add(
+                        "items.{$index}.quantity",
+                        "Insufficient stock for '{$product->name}'. Available: {$product->stock_quantity}, Requested: {$item['quantity']}"
+                    );
+                }
+            }
         }
     }
 

@@ -20,7 +20,6 @@ class POSController extends Controller
 
         $products = Product::with('category')
             ->where('is_active', true)
-            ->select('id', 'name', 'price', 'sku', 'stock_quantity', 'track_stock', 'category_id')
             ->get();
 
         return Inertia::render('POS/Index', [
@@ -53,6 +52,11 @@ class POSController extends Controller
 
         foreach ($request->items as $item) {
             $product = Product::find($item['product_id']);
+
+            // Reduce stock if the product tracks stock
+            if ($product->track_stock) {
+                $product->decrement('stock_quantity', $item['quantity']);
+            }
 
             $orderItem = OrderItem::create([
                 'order_id' => $order->id,
@@ -101,7 +105,6 @@ class POSController extends Controller
                     ->orWhere('sku', 'like', "%{$query}%")
                     ->orWhere('barcode', 'like', "%{$query}%");
             })
-            ->select('id', 'name', 'price', 'sku', 'stock_quantity', 'track_stock', 'category_id')
             ->limit(20)
             ->get();
 
