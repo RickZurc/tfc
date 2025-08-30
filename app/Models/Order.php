@@ -6,12 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Order extends Model
 {
     /** @use HasFactory<\Database\Factories\OrderFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected function casts(): array
     {
@@ -110,7 +109,7 @@ class Order extends Model
 
     public function processRefund(float $refundAmount, string $reason, int $refundedByUserId): bool
     {
-        if (! $this->canBeRefunded()) {
+        if (!$this->canBeRefunded()) {
             return false;
         }
 
@@ -148,5 +147,52 @@ class Order extends Model
     public function isPartialRefund(): bool
     {
         return $this->refund_amount && $this->refund_amount < $this->total_amount;
+    }
+
+    public function getTotalRefundedAmountAttribute(): float
+    {
+        return (float) $this->items->sum('refunded_amount');
+    }
+
+    public function getHasRefundedItemsAttribute(): bool
+    {
+        return $this->items->where('refunded_quantity', '>', 0)->count() > 0;
+    }
+
+    public function refundItem(int $orderItemId, int $quantity, string $reason, int $refundedByUserId): bool
+    {
+        $orderItem = $this->items()->find($orderItemId);
+        
+        if (!$orderItem || !$orderItem->canRefund($quantity)) {
+            return false;
+        }
+
+        // Calculate refund amount for this quantity
+        $refundAmount = ($orderItem->unit_price * $quantity);
+        
+        // Update order item
+        $orderItem->update([
+            'refunded_quantity' => $orderItem->refunded_quantity + $quantity,
+            'refunded_amount' => $orderItem->refunded_amount + $refundAmount,
+            'refund_reason' => $reason,
+            'refunded_by' => $refundedByUserId,
+            'refunded_at' => now(),
+        ]);
+
+        // Restore product stock
+        if ($orderItem->product && $orderItem->product->track_stock) {
+            $orderItem->product->increment('stock_quantity', $quantity);
+        }
+
+        // Update order's total refund amount
+        $this->update([
+            'refund_amount' => $this->total_refunded_amount,
+            'refunded_at' => now(),
+        ]);
+
+        // Update customer totals if customer exists
+        $this->customer?->updateTotals();
+
+        return true;
     }
 }

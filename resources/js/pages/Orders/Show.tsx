@@ -87,6 +87,10 @@ interface Order {
         total_price: number;
         tax_rate: number;
         tax_amount: number;
+        refunded_quantity?: number;
+        refunded_amount?: number;
+        refund_reason?: string;
+        refunded_at?: string;
         product: {
             id: number;
             name: string;
@@ -112,6 +116,13 @@ export default function OrderShow() {
     const [refundReason, setRefundReason] = useState('');
     const [isProcessingRefund, setIsProcessingRefund] = useState(false);
     const [refundErrors, setRefundErrors] = useState<Record<string, string[]>>({});
+
+    // Partial refund state
+    const [showPartialRefundDialog, setShowPartialRefundDialog] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [partialRefundQuantity, setPartialRefundQuantity] = useState('1');
+    const [partialRefundReason, setPartialRefundReason] = useState('');
+    const [isProcessingPartialRefund, setIsProcessingPartialRefund] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -321,6 +332,64 @@ export default function OrderShow() {
         setRefundErrors({});
     };
 
+    const openPartialRefundDialog = (item: any) => {
+        const remainingQuantity = item.quantity - (item.refunded_quantity || 0);
+        setSelectedItem(item);
+        setPartialRefundQuantity(remainingQuantity.toString());
+        setPartialRefundReason('');
+        setShowPartialRefundDialog(true);
+    };
+
+    const closePartialRefundDialog = () => {
+        setShowPartialRefundDialog(false);
+        setSelectedItem(null);
+        setPartialRefundQuantity('1');
+        setPartialRefundReason('');
+    };
+
+    const handlePartialRefundSubmit = async () => {
+        if (!selectedItem || !partialRefundQuantity || !partialRefundReason) return;
+
+        const quantity = parseInt(partialRefundQuantity);
+        const remainingQuantity = selectedItem.quantity - (selectedItem.refunded_quantity || 0);
+        
+        if (isNaN(quantity) || quantity <= 0 || quantity > remainingQuantity) {
+            alert(`Invalid quantity. Must be between 1 and ${remainingQuantity}`);
+            return;
+        }
+
+        setIsProcessingPartialRefund(true);
+
+        try {
+            const response = await fetch(`/order-items/${selectedItem.id}/refund`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    quantity: quantity,
+                    reason: partialRefundReason,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Refresh the page to show updated order
+                window.location.reload();
+            } else {
+                alert(result.message || 'Failed to process partial refund');
+            }
+        } catch (error) {
+            console.error('Partial refund error:', error);
+            alert('Failed to process partial refund. Please try again.');
+        } finally {
+            setIsProcessingPartialRefund(false);
+        }
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Order ${order.order_number}`} />
@@ -371,32 +440,79 @@ export default function OrderShow() {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {order.items.map((item) => (
-                                        <div key={item.id} className="flex items-center justify-between rounded-lg border p-4">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.product.category.color }} />
-                                                    <div>
-                                                        <h4 className="font-semibold">{item.product_name}</h4>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            SKU: {item.product_sku} • Category: {item.product.category.name}
-                                                        </p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            ${formatCurrency(item.unit_price)} each
-                                                            {item.tax_rate > 0 && ` • Tax: ${item.tax_rate}%`}
-                                                        </p>
+                                    {order.items.map((item) => {
+                                        const refundedQty = item.refunded_quantity || 0;
+                                        const remainingQty = item.quantity - refundedQty;
+                                        const isFullyRefunded = refundedQty >= item.quantity;
+                                        const isPartiallyRefunded = refundedQty > 0 && refundedQty < item.quantity;
+                                        
+                                        return (
+                                            <div key={item.id} className="flex items-center justify-between rounded-lg border p-4">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.product.category.color }} />
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <h4 className="font-semibold">{item.product_name}</h4>
+                                                                {isFullyRefunded && (
+                                                                    <Badge variant="destructive" className="text-xs">
+                                                                        Fully Refunded
+                                                                    </Badge>
+                                                                )}
+                                                                {isPartiallyRefunded && (
+                                                                    <Badge variant="outline" className="text-xs">
+                                                                        Partially Refunded
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-sm text-muted-foreground">
+                                                                SKU: {item.product_sku} • Category: {item.product.category.name}
+                                                            </p>
+                                                            <p className="text-sm text-muted-foreground">
+                                                                ${formatCurrency(item.unit_price)} each
+                                                                {item.tax_rate > 0 && ` • Tax: ${item.tax_rate}%`}
+                                                            </p>
+                                                            {isPartiallyRefunded && (
+                                                                <p className="text-sm text-orange-600">
+                                                                    Refunded: {refundedQty} of {item.quantity} • ${formatCurrency(item.refunded_amount || 0)}
+                                                                </p>
+                                                            )}
+                                                            {isFullyRefunded && item.refund_reason && (
+                                                                <p className="text-sm text-red-600">
+                                                                    Reason: {item.refund_reason}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="flex items-center gap-2">
+                                                        <div>
+                                                            <p className="text-sm text-muted-foreground">
+                                                                Qty: {item.quantity}
+                                                                {isPartiallyRefunded && ` (${remainingQty} remaining)`}
+                                                            </p>
+                                                            <p className="text-lg font-semibold">${formatCurrency(item.total_price)}</p>
+                                                            {item.tax_amount > 0 && (
+                                                                <p className="text-xs text-muted-foreground">Tax: ${formatCurrency(item.tax_amount)}</p>
+                                                            )}
+                                                        </div>
+                                                        {order.status === 'completed' && remainingQty > 0 && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => openPartialRefundDialog(item)}
+                                                                className="ml-2"
+                                                            >
+                                                                <RefreshCcw className="h-4 w-4 mr-1" />
+                                                                Refund
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
-                                                <p className="text-lg font-semibold">${formatCurrency(item.total_price)}</p>
-                                                {item.tax_amount > 0 && (
-                                                    <p className="text-xs text-muted-foreground">Tax: ${formatCurrency(item.tax_amount)}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </CardContent>
                         </Card>
@@ -649,6 +765,71 @@ export default function OrderShow() {
                             className="bg-red-600 hover:bg-red-700"
                         >
                             {isProcessingRefund ? 'Processing...' : `Refund $${formatCurrency(refundAmount)}`}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Partial Refund Dialog */}
+            <Dialog open={showPartialRefundDialog} onOpenChange={closePartialRefundDialog}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Refund Item</DialogTitle>
+                        <DialogDescription>
+                            {selectedItem && `Refund units of ${selectedItem.product_name}`}
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    {selectedItem && (
+                        <div className="space-y-4">
+                            <div className="rounded-lg border p-3 bg-muted/50">
+                                <p className="font-medium">{selectedItem.product_name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                    Original quantity: {selectedItem.quantity} • Unit price: ${formatCurrency(selectedItem.unit_price)}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    Already refunded: {selectedItem.refunded_quantity || 0} • Available: {selectedItem.quantity - (selectedItem.refunded_quantity || 0)}
+                                </p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="partial_quantity">Quantity to Refund</Label>
+                                <Input
+                                    id="partial_quantity"
+                                    type="number"
+                                    min="1"
+                                    max={selectedItem.quantity - (selectedItem.refunded_quantity || 0)}
+                                    value={partialRefundQuantity}
+                                    onChange={(e) => setPartialRefundQuantity(e.target.value)}
+                                    placeholder="Enter quantity"
+                                />
+                                <p className="text-sm text-muted-foreground">
+                                    Refund amount: ${formatCurrency((parseFloat(partialRefundQuantity) || 0) * selectedItem.unit_price)}
+                                </p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="partial_reason">Refund Reason</Label>
+                                <Input
+                                    id="partial_reason"
+                                    value={partialRefundReason}
+                                    onChange={(e) => setPartialRefundReason(e.target.value)}
+                                    placeholder="e.g., Defective item, Wrong size, etc."
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={closePartialRefundDialog} disabled={isProcessingPartialRefund}>
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={handlePartialRefundSubmit} 
+                            disabled={isProcessingPartialRefund || !partialRefundQuantity || !partialRefundReason}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            {isProcessingPartialRefund ? 'Processing...' : 'Process Refund'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

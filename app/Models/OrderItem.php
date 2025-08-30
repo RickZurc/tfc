@@ -19,6 +19,8 @@ class OrderItem extends Model
             'total_price' => 'decimal:2',
             'tax_rate' => 'decimal:2',
             'tax_amount' => 'decimal:2',
+            'refunded_amount' => 'decimal:2',
+            'refunded_at' => 'datetime',
         ];
     }
 
@@ -29,6 +31,11 @@ class OrderItem extends Model
         'product_sku',
         'unit_price',
         'quantity',
+        'refunded_quantity',
+        'refunded_amount',
+        'refund_reason',
+        'refunded_by',
+        'refunded_at',
         'total_price',
         'tax_rate',
         'tax_amount',
@@ -49,5 +56,48 @@ class OrderItem extends Model
         $this->total_price = $this->unit_price * $this->quantity;
         $this->tax_amount = ($this->total_price * $this->tax_rate) / 100;
         $this->save();
+    }
+
+    public function getRemainingQuantityAttribute(): int
+    {
+        return $this->quantity - $this->refunded_quantity;
+    }
+
+    public function getIsFullyRefundedAttribute(): bool
+    {
+        return $this->refunded_quantity >= $this->quantity;
+    }
+
+    public function getIsPartiallyRefundedAttribute(): bool
+    {
+        return $this->refunded_quantity > 0 && $this->refunded_quantity < $this->quantity;
+    }
+
+    public function canRefund(int $quantity = null): bool
+    {
+        $quantityToRefund = $quantity ?? $this->remaining_quantity;
+        return $quantityToRefund > 0 && ($this->refunded_quantity + $quantityToRefund) <= $this->quantity;
+    }
+
+    public function refundItem(int $quantity, string $reason, int $refundedBy): bool
+    {
+        if (!$this->canRefund($quantity)) {
+            return false;
+        }
+
+        $refundAmount = ($this->unit_price * $quantity);
+        
+        $this->refunded_quantity += $quantity;
+        $this->refunded_amount += $refundAmount;
+        $this->refund_reason = $reason;
+        $this->refunded_by = $refundedBy;
+        $this->refunded_at = now();
+
+        return $this->save();
+    }
+
+    public function refundedBy(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'refunded_by');
     }
 }
