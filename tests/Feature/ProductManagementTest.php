@@ -62,7 +62,7 @@ describe('Product Management', function () {
         $response = $this->post(route('products.store'), $productData);
 
         $response->assertSessionHasErrors($field);
-    })->with(['name', 'category_id', 'price', 'sku']);
+    })->with(['name', 'category_id', 'price']); // Removed 'sku' since it's now optional
 
     it('can update a product', function () {
         $category = Category::factory()->create();
@@ -91,6 +91,54 @@ describe('Product Management', function () {
             ->name->toBe('Updated Product Name')
             ->slug->toBe('updated-product-name')
             ->price->toBe('149.99');
+    });
+
+    it('auto-generates SKU when not provided', function () {
+        $category = Category::factory()->create();
+
+        $productData = [
+            'name' => 'Test Product',
+            'description' => 'A great test product',
+            'category_id' => $category->id,
+            'price' => 99.99,
+            'cost_price' => 50.00,
+            // No SKU provided - should be auto-generated
+            'track_stock' => false,
+            'tax_rate' => 0.00,
+            'is_active' => true,
+        ];
+
+        $response = $this->post(route('products.store'), $productData);
+
+        $response->assertRedirect(route('products.index'));
+        
+        $product = Product::latest()->first();
+        expect($product)
+            ->name->toBe('Test Product')
+            ->slug->toBe('test-product')
+            ->sku->not->toBeEmpty()
+            ->sku->toMatch('/^[A-Z0-9]+$/'); // Should be alphanumeric uppercase
+    });
+
+    it('auto-generates SKU with fallback for special characters', function () {
+        $category = Category::factory()->create();
+
+        $productData = [
+            'name' => '!@#$%^&*()', // Special characters only
+            'category_id' => $category->id,
+            'price' => 99.99,
+            'track_stock' => false,
+            'is_active' => true,
+        ];
+
+        $response = $this->post(route('products.store'), $productData);
+
+        $response->assertRedirect(route('products.index'));
+        
+        $product = Product::latest()->first();
+        expect($product->sku)
+            ->toStartWith('PROD')
+            ->toMatch('/^PROD\d{3}$/'); // Should be PROD + 3 digits
     });
 
     it('can delete a product without orders', function () {

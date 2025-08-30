@@ -542,7 +542,7 @@ export default function OrdersIndex() {
                                 </div>
                             ) : (
                                 orders.data.map((order) => (
-                                    <Card key={order.id} className="border-l-4 border-l-blue-500">
+                                    <Card key={order.id} className={`border-l-4 ${order.status === 'refunded' ? 'border-l-red-500' : 'border-l-blue-500'}`}>
                                         <CardContent className="p-4">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex-1">

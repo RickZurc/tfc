@@ -1,11 +1,15 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Calendar, CreditCard, Package, Receipt, User } from 'lucide-react';
+import { ArrowLeft, Calendar, CreditCard, Package, Receipt, RefreshCcw, User } from 'lucide-react';
+import { useState } from 'react';
 
 // Helper function to safely format currency
 const formatCurrency = (value: string | number | null | undefined): string => {
@@ -52,6 +56,9 @@ interface Order {
     payment_method: string;
     amount_paid: number;
     change_amount: number;
+    refund_amount: number | null;
+    refund_reason: string | null;
+    refunded_at: string | null;
     notes: string | null;
     created_at: string;
     completed_at: string | null;
@@ -65,6 +72,11 @@ interface Order {
         name: string;
         email: string;
         phone: string;
+    } | null;
+    refunded_by: {
+        id: number;
+        name: string;
+        email: string;
     } | null;
     items: Array<{
         id: number;
@@ -93,6 +105,13 @@ interface PageProps extends Record<string, unknown> {
 
 export default function OrderShow() {
     const { order } = usePage<PageProps>().props;
+
+    // Refund state
+    const [showRefundDialog, setShowRefundDialog] = useState(false);
+    const [refundAmount, setRefundAmount] = useState('');
+    const [refundReason, setRefundReason] = useState('');
+    const [isProcessingRefund, setIsProcessingRefund] = useState(false);
+    const [refundErrors, setRefundErrors] = useState<Record<string, string[]>>({});
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -226,6 +245,82 @@ export default function OrderShow() {
         }
     };
 
+    const canRefund = () => {
+        return order.status === 'completed' && !order.refund_amount;
+    };
+
+    const handleRefundSubmit = async () => {
+        if (!refundAmount || !refundReason) {
+            setRefundErrors({
+                refund_amount: refundAmount ? [] : ['Refund amount is required'],
+                refund_reason: refundReason ? [] : ['Refund reason is required'],
+            });
+            return;
+        }
+
+        const amount = parseFloat(refundAmount);
+        if (isNaN(amount) || amount <= 0 || amount > order.total_amount) {
+            setRefundErrors({
+                refund_amount: [`Refund amount must be between $0.01 and $${formatCurrency(order.total_amount)}`],
+                refund_reason: [],
+            });
+            return;
+        }
+
+        setIsProcessingRefund(true);
+        setRefundErrors({});
+
+        try {
+            const response = await fetch(`/orders/${order.id}/refund`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    refund_amount: amount,
+                    refund_reason: refundReason,
+                }),
+            });
+
+            if (response.ok) {
+                // Refresh the page to show updated order status
+                window.location.reload();
+            } else {
+                const result = await response.json();
+                if (result.errors) {
+                    setRefundErrors(result.errors);
+                } else {
+                    setRefundErrors({
+                        general: [result.message || 'Failed to process refund'],
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Refund error:', error);
+            setRefundErrors({
+                general: ['Failed to process refund. Please try again.'],
+            });
+        } finally {
+            setIsProcessingRefund(false);
+        }
+    };
+
+    const openRefundDialog = () => {
+        setRefundAmount(order.total_amount.toString());
+        setRefundReason('');
+        setRefundErrors({});
+        setShowRefundDialog(true);
+    };
+
+    const closeRefundDialog = () => {
+        setShowRefundDialog(false);
+        setRefundAmount('');
+        setRefundReason('');
+        setRefundErrors({});
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Order ${order.order_number}`} />
@@ -254,6 +349,12 @@ export default function OrderShow() {
                             <Receipt className="mr-2 h-4 w-4" />
                             Print Receipt
                         </Button>
+                        {canRefund() && (
+                            <Button onClick={openRefundDialog} variant="outline">
+                                <RefreshCcw className="mr-2 h-4 w-4" />
+                                Refund
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -333,7 +434,7 @@ export default function OrderShow() {
                                         </div>
                                     )}
                                     {order.discount_amount > 0 && (
-                                        <div className="flex justify-between text-red-600">
+                                        <div className="flex justify-between text-yellow-600">
                                             <span>Discount:</span>
                                             <span>-${formatCurrency(order.discount_amount)}</span>
                                         </div>
@@ -343,6 +444,15 @@ export default function OrderShow() {
                                         <span>Total:</span>
                                         <span>${formatCurrency(order.total_amount)}</span>
                                     </div>
+                                    {order.refund_amount && (
+                                        <>
+                                            <Separator />
+                                            <div className="flex justify-between text-red-600 font-semibold">
+                                                <span>Refund Amount:</span>
+                                                <span>-${formatCurrency(order.refund_amount)}</span>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
@@ -372,6 +482,40 @@ export default function OrderShow() {
                                 )}
                             </CardContent>
                         </Card>
+
+                        {/* Refund Information */}
+                        {order.refund_amount && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-red-600">
+                                        <RefreshCcw className="h-5 w-5" />
+                                        Refund Details
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    <div className="flex justify-between">
+                                        <span>Refund Amount:</span>
+                                        <span className="font-medium text-red-600">${formatCurrency(order.refund_amount)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Refund Date:</span>
+                                        <span className="font-medium">{order.refunded_at ? formatDate(order.refunded_at) : 'N/A'}</span>
+                                    </div>
+                                    {order.refund_reason && (
+                                        <div>
+                                            <p className="text-sm font-medium mb-1">Reason:</p>
+                                            <p className="text-sm text-muted-foreground">{order.refund_reason}</p>
+                                        </div>
+                                    )}
+                                    {order.refunded_by && (
+                                        <div>
+                                            <p className="text-sm font-medium mb-1">Processed by:</p>
+                                            <p className="text-sm text-muted-foreground">{order.refunded_by.name}</p>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )}
 
                         {/* Staff Information */}
                         <Card>
@@ -434,11 +578,81 @@ export default function OrderShow() {
                                         </div>
                                     </div>
                                 )}
+                                {order.refunded_at && (
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-2 w-2 rounded-full bg-red-500" />
+                                        <div>
+                                            <p className="text-sm font-medium">Order Refunded</p>
+                                            <p className="text-xs text-muted-foreground">{formatDate(order.refunded_at)}</p>
+                                        </div>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </div>
                 </div>
             </div>
+
+            {/* Refund Dialog */}
+            <Dialog open={showRefundDialog} onOpenChange={closeRefundDialog}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Refund Order {order.order_number}</DialogTitle>
+                        <DialogDescription>
+                            Process a refund for this order. The maximum refund amount is ${formatCurrency(order.total_amount)}.
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="refund_amount">Refund Amount</Label>
+                            <Input
+                                id="refund_amount"
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                max={order.total_amount}
+                                value={refundAmount}
+                                onChange={(e) => setRefundAmount(e.target.value)}
+                                placeholder="Enter refund amount"
+                            />
+                            {refundErrors.refund_amount && (
+                                <p className="text-sm text-red-600">{refundErrors.refund_amount[0]}</p>
+                            )}
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <Label htmlFor="refund_reason">Refund Reason</Label>
+                            <Input
+                                id="refund_reason"
+                                value={refundReason}
+                                onChange={(e) => setRefundReason(e.target.value)}
+                                placeholder="Enter reason for refund"
+                            />
+                            {refundErrors.refund_reason && (
+                                <p className="text-sm text-red-600">{refundErrors.refund_reason[0]}</p>
+                            )}
+                        </div>
+
+                        {refundErrors.general && (
+                            <p className="text-sm text-red-600">{refundErrors.general[0]}</p>
+                        )}
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={closeRefundDialog} disabled={isProcessingRefund}>
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={handleRefundSubmit} 
+                            disabled={isProcessingRefund}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            {isProcessingRefund ? 'Processing...' : `Refund $${formatCurrency(refundAmount)}`}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

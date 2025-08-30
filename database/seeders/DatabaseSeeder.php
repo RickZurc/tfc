@@ -14,18 +14,24 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Create admin user
-        User::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@pos.com',
-            'password' => bcrypt('password'),
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@pos.com'],
+            [
+                'name' => 'Admin User',
+                'email' => 'admin@pos.com',
+                'password' => bcrypt('password'),
+            ]
+        );
 
         // Create cashier user
-        User::factory()->create([
-            'name' => 'Cashier User',
-            'email' => 'cashier@pos.com',
-            'password' => bcrypt('password'),
-        ]);
+        User::firstOrCreate(
+            ['email' => 'cashier@pos.com'],
+            [
+                'name' => 'Cashier User',
+                'email' => 'cashier@pos.com',
+                'password' => bcrypt('password'),
+            ]
+        );
 
         // Seed POS data in correct order (dependencies matter)
         $this->call([

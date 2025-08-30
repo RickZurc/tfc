@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Database\Seeder;
 
 class ProductSeeder extends Seeder
@@ -11,258 +13,78 @@ class ProductSeeder extends Seeder
      */
     public function run(): void
     {
-        $products = [
-            // Electronics
-            [
-                'category_id' => 1,
-                'name' => 'Wireless Earbuds',
-                'slug' => 'wireless-earbuds',
-                'description' => 'High-quality wireless earbuds with noise cancellation',
-                'sku' => 'ELEC-001',
-                'barcode' => '1234567890123',
-                'price' => 89.99,
-                'cost_price' => 45.00,
-                'stock_quantity' => 50,
-                'min_stock_level' => 10,
-                'unit' => 'piece',
-                'image_url' => null,
-                'is_active' => true,
-                'track_stock' => true,
-                'tax_rate' => 10.00,
-            ],
-            [
-                'category_id' => 1,
-                'name' => 'Phone Charger',
-                'slug' => 'phone-charger',
-                'description' => 'Universal USB-C phone charger',
-                'sku' => 'ELEC-002',
-                'barcode' => '1234567890124',
-                'price' => 24.99,
-                'cost_price' => 12.00,
-                'stock_quantity' => 75,
-                'min_stock_level' => 15,
-                'unit' => 'piece',
-                'image_url' => null,
-                'is_active' => true,
-                'track_stock' => true,
-                'tax_rate' => 10.00,
-            ],
-            [
-                'category_id' => 1,
-                'name' => 'Bluetooth Speaker',
-                'slug' => 'bluetooth-speaker',
-                'description' => 'Portable Bluetooth speaker with excellent sound quality',
-                'sku' => 'ELEC-003',
-                'barcode' => '1234567890129',
-                'price' => 59.99,
-                'cost_price' => 30.00,
-                'stock_quantity' => 25,
-                'min_stock_level' => 5,
-                'unit' => 'piece',
-                'image_url' => null,
-                'is_active' => true,
-                'track_stock' => true,
-                'tax_rate' => 10.00,
-            ],
-
-            // Beverages
-            [
-                'category_id' => 2,
-                'name' => 'Coffee - Premium Blend',
-                'slug' => 'coffee-premium-blend',
-                'description' => 'Premium coffee blend 250g',
-                'sku' => 'BEV-001',
-                'barcode' => '1234567890125',
-                'price' => 12.99,
-                'cost_price' => 6.50,
-                'stock_quantity' => 30,
-                'min_stock_level' => 5,
-                'unit' => 'pack',
-                'image_url' => null,
-                'is_active' => true,
-                'track_stock' => true,
-                'tax_rate' => 5.00,
-            ],
-            [
-                'category_id' => 2,
-                'name' => 'Bottled Water',
-                'slug' => 'bottled-water',
-                'description' => 'Pure spring water 500ml',
-                'sku' => 'BEV-002',
-                'barcode' => '1234567890126',
-                'price' => 1.99,
-                'cost_price' => 0.80,
-                'stock_quantity' => 100,
-                'min_stock_level' => 20,
-                'unit' => 'bottle',
-                'image_url' => null,
-                'is_active' => true,
-                'track_stock' => true,
-                'tax_rate' => 0.00,
-            ],
-            [
-                'category_id' => 2,
-                'name' => 'Energy Drink',
-                'slug' => 'energy-drink',
-                'description' => 'High-energy drink 250ml',
-                'sku' => 'BEV-003',
-                'barcode' => '1234567890130',
-                'price' => 3.49,
-                'cost_price' => 1.50,
-                'stock_quantity' => 40,
-                'min_stock_level' => 8,
-                'unit' => 'can',
-                'image_url' => null,
-                'is_active' => true,
-                'track_stock' => true,
-                'tax_rate' => 5.00,
-            ],
-            [
-                'category_id' => 2,
-                'name' => 'Fresh Orange Juice',
-                'slug' => 'fresh-orange-juice',
-                'description' => 'Freshly squeezed orange juice 330ml',
-                'sku' => 'BEV-004',
-                'barcode' => '1234567890131',
-                'price' => 4.99,
-                'cost_price' => 2.20,
-                'stock_quantity' => 0,
-                'min_stock_level' => 0,
-                'unit' => 'bottle',
-                'image_url' => null,
-                'is_active' => true,
-                'track_stock' => false,
-                'tax_rate' => 0.00,
-            ],
-
-            // Snacks
-            [
-                'category_id' => 3,
-                'name' => 'Chocolate Bar',
-                'slug' => 'chocolate-bar',
-                'description' => 'Dark chocolate bar 100g',
-                'sku' => 'SNK-001',
-                'barcode' => '1234567890127',
-                'price' => 3.99,
-                'cost_price' => 1.80,
-                'stock_quantity' => 60,
-                'min_stock_level' => 10,
-                'unit' => 'piece',
-                'image_url' => null,
-                'is_active' => true,
-                'track_stock' => true,
-                'tax_rate' => 5.00,
-            ],
-            [
-                'category_id' => 3,
-                'name' => 'Potato Chips',
-                'slug' => 'potato-chips',
-                'description' => 'Classic salted potato chips 150g',
-                'sku' => 'SNK-002',
-                'barcode' => '1234567890128',
-                'price' => 2.99,
-                'cost_price' => 1.20,
-                'stock_quantity' => 80,
-                'min_stock_level' => 15,
-                'unit' => 'pack',
-                'image_url' => null,
-                'is_active' => true,
-                'track_stock' => true,
-                'tax_rate' => 5.00,
-            ],
-            [
-                'category_id' => 3,
-                'name' => 'Mixed Nuts',
-                'slug' => 'mixed-nuts',
-                'description' => 'Premium mixed nuts 200g',
-                'sku' => 'SNK-003',
-                'barcode' => '1234567890132',
-                'price' => 7.99,
-                'cost_price' => 4.00,
-                'stock_quantity' => 35,
-                'min_stock_level' => 5,
-                'unit' => 'pack',
-                'image_url' => null,
-                'is_active' => true,
-                'track_stock' => true,
-                'tax_rate' => 5.00,
-            ],
-
-            // Personal Care
-            [
-                'category_id' => 4,
-                'name' => 'Hand Sanitizer',
-                'slug' => 'hand-sanitizer',
-                'description' => 'Antibacterial hand sanitizer 100ml',
-                'sku' => 'CARE-001',
-                'barcode' => '1234567890133',
-                'price' => 4.99,
-                'cost_price' => 2.50,
-                'stock_quantity' => 45,
-                'min_stock_level' => 10,
-                'unit' => 'bottle',
-                'image_url' => null,
-                'is_active' => true,
-                'track_stock' => true,
-                'tax_rate' => 0.00,
-            ],
-            [
-                'category_id' => 4,
-                'name' => 'Toothbrush',
-                'slug' => 'toothbrush',
-                'description' => 'Soft bristle toothbrush',
-                'sku' => 'CARE-002',
-                'barcode' => '1234567890134',
-                'price' => 3.49,
-                'cost_price' => 1.50,
-                'stock_quantity' => 50,
-                'min_stock_level' => 10,
-                'unit' => 'piece',
-                'image_url' => null,
-                'is_active' => true,
-                'track_stock' => true,
-                'tax_rate' => 0.00,
-            ],
-
-            // Office Supplies
-            [
-                'category_id' => 5,
-                'name' => 'Ballpoint Pen',
-                'slug' => 'ballpoint-pen',
-                'description' => 'Blue ink ballpoint pen',
-                'sku' => 'OFF-001',
-                'barcode' => '1234567890135',
-                'price' => 1.99,
-                'cost_price' => 0.80,
-                'stock_quantity' => 100,
-                'min_stock_level' => 20,
-                'unit' => 'piece',
-                'image_url' => null,
-                'is_active' => true,
-                'track_stock' => true,
-                'tax_rate' => 0.00,
-            ],
-            [
-                'category_id' => 5,
-                'name' => 'Notebook A5',
-                'slug' => 'notebook-a5',
-                'description' => 'Lined notebook A5 size 80 pages',
-                'sku' => 'OFF-002',
-                'barcode' => '1234567890136',
-                'price' => 5.99,
-                'cost_price' => 2.80,
-                'stock_quantity' => 25,
-                'min_stock_level' => 5,
-                'unit' => 'piece',
-                'image_url' => null,
-                'is_active' => true,
-                'track_stock' => true,
-                'tax_rate' => 0.00,
-            ],
-        ];
-
-        foreach ($products as $product) {
-            \App\Models\Product::create($product);
+        // Get available categories
+        $categories = Category::all();
+        
+        if ($categories->isEmpty()) {
+            $this->command->warn('No categories found. Please run CategorySeeder first.');
+            return;
         }
+
+        $this->command->info('Creating products for each category...');
+
+        foreach ($categories as $category) {
+            $this->command->info("Creating products for category: {$category->name}");
+            
+            // Create 4-6 regular products per category
+            $regularCount = fake()->numberBetween(4, 6);
+            Product::factory()
+                ->count($regularCount)
+                ->forCategory($category)
+                ->create();
+
+            // Create 1-2 special state products for variety (10% of total)
+            $specialCount = fake()->numberBetween(0, 2);
+            
+            if ($specialCount > 0) {
+                // Mix of different states for more realistic data
+                $states = ['outOfStock', 'lowStock', 'inactive', 'noStockTracking'];
+                
+                for ($i = 0; $i < $specialCount; $i++) {
+                    $state = fake()->randomElement($states);
+                    
+                    Product::factory()
+                        ->forCategory($category)
+                        ->{$state}()
+                        ->create();
+                }
+            }
+
+            // Create 1 premium product for some categories (30% chance)
+            if (fake()->boolean(30)) {
+                Product::factory()
+                    ->forCategory($category)
+                    ->premium()
+                    ->create();
+            }
+
+            // Create 1 budget product for some categories (40% chance)
+            if (fake()->boolean(40)) {
+                Product::factory()
+                    ->forCategory($category)
+                    ->budget()
+                    ->create();
+            }
+        }
+
+        $totalProducts = Product::count();
+        $this->command->info("Successfully created {$totalProducts} products across {$categories->count()} categories!");
+        
+        // Show some statistics
+        $activeProducts = Product::where('is_active', true)->count();
+        $trackingStock = Product::where('track_stock', true)->count();
+        $outOfStock = Product::where('track_stock', true)->where('stock_quantity', 0)->count();
+        $lowStock = Product::whereRaw('track_stock = true AND stock_quantity <= min_stock_level')->count();
+        
+        $this->command->table(
+            ['Metric', 'Count'],
+            [
+                ['Total Products', $totalProducts],
+                ['Active Products', $activeProducts],
+                ['Tracking Stock', $trackingStock],
+                ['Out of Stock', $outOfStock],
+                ['Low Stock', $lowStock],
+            ]
+        );
     }
 }
