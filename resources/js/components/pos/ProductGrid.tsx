@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Product } from '@/types/pos';
+import { Product, CartItem } from '@/types/pos';
 
 // Helper function to safely format currency
 const formatCurrency = (value: any): string => {
@@ -11,21 +11,38 @@ const formatCurrency = (value: any): string => {
 
 interface ProductGridProps {
   products: Product[];
+  cart: CartItem[];
   onAddToCart: (product: Product) => void;
 }
 
-export default function ProductGrid({ products, onAddToCart }: ProductGridProps) {
+export default function ProductGrid({ products, cart, onAddToCart }: ProductGridProps) {
+  // Calculate available stock for each product (original stock - cart quantity)
+  const getAvailableStock = (product: Product): number => {
+    const cartItem = cart.find(item => item.id === product.id);
+    const cartQuantity = cartItem ? cartItem.quantity : 0;
+    return Math.max(0, product.stock_quantity - cartQuantity);
+  };
+
+  const handleSelect = (product: Product) => {
+    const availableStock = getAvailableStock(product);
+    
+    // Don't allow selection if out of stock
+    if (product.track_stock && availableStock <= 0) return;
+    
+    // Call parent - let it handle the cart logic
+    onAddToCart(product);
+  };
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
       {products.map(product => (
         <Card key={product.id} className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-          <CardContent className="p-4" onClick={() => onAddToCart(product)}>
+          <CardContent className="p-4" onClick={() => handleSelect(product)}>
             <div className="space-y-3">
               <div>
                 <h3 className="font-semibold text-sm truncate">{product.name}</h3>
                 <p className="text-xs text-muted-foreground">SKU: {product.sku}</p>
               </div>
-              
               {/* Price Display with Discount */}
               <div className="flex justify-between items-center">
                 <div className="flex flex-col">
@@ -50,13 +67,12 @@ export default function ProductGrid({ products, onAddToCart }: ProductGridProps)
                   )}
                 </div>
                 <Badge 
-                  variant={product.track_stock && product.stock_quantity <= 10 ? "destructive" : "default"}
+                  variant={product.track_stock && getAvailableStock(product) <= 10 ? "destructive" : "default"}
                   className="text-xs"
                 >
-                  {product.track_stock ? `${product.stock_quantity} left` : '∞'}
+                  {product.track_stock ? `${getAvailableStock(product)} left` : '∞'}
                 </Badge>
               </div>
-              
               <div className="flex items-center gap-2">
                 <div 
                   className="w-2 h-2 rounded-full" 

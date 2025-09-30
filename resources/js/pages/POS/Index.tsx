@@ -468,6 +468,7 @@ export default function POSIndex() {
             {/* Products Grid */}
             <ProductGrid 
               products={filteredProducts}
+              cart={cart}
               onAddToCart={addToCart}
             />
           </div>
