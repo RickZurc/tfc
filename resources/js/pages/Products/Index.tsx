@@ -172,13 +172,10 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
     };
 
     const confirmDelete = () => {
-        console.log('confirmDelete called', deleteDialog);
 
         if (deleteDialog.type === 'single' && deleteDialog.product) {
-            console.log('Single delete for product:', deleteDialog.product.id);
             router.delete(route('products.destroy', deleteDialog.product.id), {
                 onSuccess: () => {
-                    console.log('Single delete success');
                     setDeleteDialog({ open: false, type: 'single' });
                 },
                 onError: (errors) => {
@@ -186,7 +183,6 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                 },
             });
         } else if (deleteDialog.type === 'bulk') {
-            console.log('Bulk delete for products:', selectedProducts);
             router.post(
                 route('products.bulk-action'),
                 {
@@ -195,7 +191,6 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
                 },
                 {
                     onSuccess: () => {
-                        console.log('Bulk delete success');
                         setSelectedProducts([]);
                         setDeleteDialog({ open: false, type: 'bulk' });
                     },

@@ -131,7 +131,6 @@ export default function ProductCreate({ categories }: Props) {
         });
     };
 
-    console.log('Categories:', categories); // Debugging line
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

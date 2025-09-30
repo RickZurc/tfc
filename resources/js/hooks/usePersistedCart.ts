@@ -34,7 +34,6 @@ export function usePersistedCart() {
                 if (new Date() > expiryTime) {
                     // Cart has expired, clear it
                     localStorage.removeItem(CART_STORAGE_KEY);
-                    console.log('Cart expired and cleared');
                 } else {
                     // Restore cart state
                     setCart(cartState.items || []);
@@ -42,7 +41,6 @@ export function usePersistedCart() {
                     setDiscountType(cartState.discountType || 'numerical');
                     setPaymentMethod(cartState.paymentMethod || 'cash');
                     setCustomerId(cartState.customerId);
-                    console.log('Cart restored from storage:', cartState.items.length, 'items');
                 }
             }
         } catch (error) {
@@ -108,12 +106,10 @@ export function usePersistedCart() {
         setPaymentMethod('cash');
         setCustomerId(undefined);
         localStorage.removeItem(CART_STORAGE_KEY);
-        console.log('Cart cleared');
     }, []);
 
     const clearStoredCart = useCallback(() => {
         localStorage.removeItem(CART_STORAGE_KEY);
-        console.log('Stored cart cleared');
     }, []);
 
     // Get cart info for debugging
@@ -149,7 +145,6 @@ export function usePersistedCart() {
                     customerId,
                 }),
             });
-            console.log('Cart backed up to server');
         } catch (error) {
             console.error('Failed to backup cart to server:', error);
         }

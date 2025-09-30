@@ -23,13 +23,11 @@ export default function ProductGrid({ products, cart, onAddToCart }: ProductGrid
     return Math.max(0, product.stock_quantity - cartQuantity);
   };
 
-  const handleSelect = (product: Product) => {
+    const handleSelect = (product: Product) => {
     const availableStock = getAvailableStock(product);
     
-    // Don't allow selection if out of stock
-    if (product.track_stock && availableStock <= 0) return;
-    
-    // Call parent - let it handle the cart logic
+    // Always call onAddToCart regardless of stock level
+    // Let the parent component handle out-of-stock logic
     onAddToCart(product);
   };
 

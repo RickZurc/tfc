@@ -143,12 +143,18 @@ export default function POSIndex() {
   });
 
   const addToCart = (product: Product) => {
+    // Calculate available stock (original stock - current cart quantity)
+    const existingCartItem = cart.find(item => item.id === product.id);
+    const currentCartQuantity = existingCartItem ? existingCartItem.quantity : 0;
+    const availableStock = product.stock_quantity - currentCartQuantity;
+    
     // Check if product is out of stock
-    if (product.track_stock && product.stock_quantity <= 0) {
+    if (product.track_stock && availableStock <= 0) {
       setOutOfStockProduct(product.name);
       setShowOutOfStockDialog(true);
       return;
     }
+
 
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.id === product.id);
@@ -156,7 +162,7 @@ export default function POSIndex() {
       const price = product.current_price ?? parseFloat(product.price.toString());
       
       if (existingItem) {
-        // Check if adding another quantity would exceed stock
+        // Check if adding another quantity would exceed original stock
         if (product.track_stock && (existingItem.quantity + 1) > product.stock_quantity) {
           setOutOfStockProduct(product.name);
           setShowOutOfStockDialog(true);
@@ -169,13 +175,7 @@ export default function POSIndex() {
             : item
         );
       } else {
-        // Check stock for new item
-        if (product.track_stock && product.stock_quantity < 1) {
-          setOutOfStockProduct(product.name);
-          setShowOutOfStockDialog(true);
-          return prevCart; // Don't add to cart
-        }
-        
+        // For new items, we already checked availableStock above
         const cartItem: CartItem = { 
           ...product, 
           price, 
@@ -389,7 +389,6 @@ export default function POSIndex() {
         // Clear server backup as well
         try {
           await fetch('/api/pos/clear-cart', { method: 'DELETE' });
-          console.log('Cart and server backup cleared after successful sale');
         } catch (error) {
           console.error('Failed to clear server backup:', error);
         }
@@ -415,7 +414,6 @@ export default function POSIndex() {
     try {
       await saveCartToServer();
       // You could show a toast notification here
-      console.log('Cart manually saved to server');
     } catch (error) {
       console.error('Failed to save cart to server:', error);
     }
