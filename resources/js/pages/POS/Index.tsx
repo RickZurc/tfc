@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { usePersistedCart } from '@/hooks/usePersistedCart';
@@ -317,11 +317,19 @@ export default function POSIndex() {
     }
     
     try {
+      // Get fresh CSRF token from the meta tag
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      
+      if (!csrfToken) {
+        throw new Error('CSRF token not found. Please refresh the page.');
+      }
+
       const response = await fetch('/pos/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          'X-CSRF-TOKEN': csrfToken,
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           items: cart.map(item => ({
@@ -336,9 +344,21 @@ export default function POSIndex() {
         }),
       });
 
+      if (!response.ok) {
+        // Handle non-2xx responses
+        if (response.status === 419) {
+          throw new Error('Session expired. Please refresh the page and try again.');
+        }
+        
+        // Try to get error message from response
+        const errorText = await response.text();
+        console.error('Server error response:', errorText);
+        throw new Error(`Server error (${response.status}). Please try again.`);
+      }
+
       const result = await response.json();
 
-      if (response.ok) {
+      if (result.success !== false) {
         // Store cart information before clearing
         const orderSummary = {
           ...result.order,
