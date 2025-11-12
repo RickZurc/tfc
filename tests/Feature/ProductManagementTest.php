@@ -34,13 +34,13 @@ describe('Product Management', function () {
         $response = $this->post(route('products.store'), $productData);
 
         $response->assertRedirect(route('products.index'));
-        
+
         expect('products')->toHaveRecord([
             'name' => 'Test Product',
             'slug' => 'test-product',
             'sku' => 'TEST001',
         ]);
-        
+
         expect(Product::latest()->first())
             ->name->toBe('Test Product')
             ->slug->toBe('test-product')
@@ -86,7 +86,7 @@ describe('Product Management', function () {
         $response = $this->put(route('products.update', $product), $updateData);
 
         $response->assertRedirect(route('products.index'));
-        
+
         expect($product->fresh())
             ->name->toBe('Updated Product Name')
             ->slug->toBe('updated-product-name')
@@ -112,7 +112,7 @@ describe('Product Management', function () {
         $response = $this->post(route('products.store'), $productData);
 
         $response->assertRedirect(route('products.index'));
-        
+
         $product = Product::latest()->first();
         expect($product)
             ->name->toBe('Test Product')
@@ -136,7 +136,7 @@ describe('Product Management', function () {
         $response = $this->post(route('products.store'), $productData);
 
         $response->assertRedirect(route('products.index'));
-        
+
         $product = Product::latest()->first();
         expect($product->sku)
             ->toStartWith('PROD')
@@ -149,7 +149,7 @@ describe('Product Management', function () {
         $response = $this->delete(route('products.destroy', $product));
 
         $response->assertRedirect(route('products.index'));
-        
+
         expect(Product::find($product->id))
             ->toBeNull();
     });
@@ -221,7 +221,7 @@ describe('Product Management', function () {
         $response = $this->post(route('products.store'), $productData);
 
         $response->assertRedirect(route('products.index'));
-        
+
         $product = Product::latest()->first();
         expect($product)
             ->discount_active->toBeTrue()
@@ -250,7 +250,7 @@ describe('Product Management', function () {
         $response = $this->post(route('products.store'), $productData);
 
         $response->assertRedirect(route('products.index'));
-        
+
         $product = Product::latest()->first();
         expect($product)
             ->discount_active->toBeTrue()
@@ -285,7 +285,7 @@ describe('Product Management', function () {
         $response = $this->put(route('products.update', $product), $updateData);
 
         $response->assertRedirect(route('products.index'));
-        
+
         expect($product->fresh())
             ->discount_active->toBeTrue()
             ->discount_type->toBe('percentage')
@@ -340,7 +340,7 @@ describe('Product Management', function () {
 
     it('includes discount information in product serialization', function () {
         $category = Category::factory()->create();
-        
+
         $product = Product::factory()->create([
             'category_id' => $category->id,
             'price' => 100.00,
@@ -356,7 +356,7 @@ describe('Product Management', function () {
         expect($productArray)
             ->toHaveKey('has_active_discount')
             ->toHaveKey('current_price');
-        
+
         expect($productArray['has_active_discount'])->toBeTrue();
         expect($productArray['current_price'])->toBe(80.0); // 100 - 20% = 80
     });
@@ -425,5 +425,77 @@ describe('Product Management', function () {
 
         expect($product->hasActiveDiscount())->toBeFalse();
         expect($product->getCurrentPrice())->toBe(100.0);
+    });
+
+    it('displays product view page with discount information', function () {
+        $product = Product::factory()->create([
+            'price' => 100.00,
+            'discount_active' => true,
+            'discount_type' => 'percentage',
+            'discount_percentage' => 20.00,
+            'discount_starts_at' => now()->subDay(),
+            'discount_ends_at' => now()->addWeek(),
+        ]);
+
+        $response = $this->get(route('products.show', $product));
+
+        $response->assertSuccessful();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Products/Show')
+            ->has('product', fn ($product) => $product
+                ->where('discount_active', true)
+                ->where('discount_type', 'percentage')
+                ->where('discount_percentage', 20)
+                ->where('has_active_discount', true)
+                ->where('current_price', 80)
+                ->etc()
+            )
+        );
+    });
+
+    it('displays product view page without discount when not active', function () {
+        $product = Product::factory()->create([
+            'price' => 100.00,
+            'discount_active' => false,
+        ]);
+
+        $response = $this->get(route('products.show', $product));
+
+        $response->assertSuccessful();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Products/Show')
+            ->has('product', fn ($product) => $product
+                ->where('discount_active', false)
+                ->where('has_active_discount', false)
+                ->where('current_price', 100)
+                ->etc()
+            )
+        );
+    });
+
+    it('displays product view page with fixed amount discount', function () {
+        $product = Product::factory()->create([
+            'price' => 100.00,
+            'discount_active' => true,
+            'discount_type' => 'fixed',
+            'discount_amount' => 15.00,
+            'discount_starts_at' => now()->subDay(),
+            'discount_ends_at' => now()->addWeek(),
+        ]);
+
+        $response = $this->get(route('products.show', $product));
+
+        $response->assertSuccessful();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Products/Show')
+            ->has('product', fn ($product) => $product
+                ->where('discount_active', true)
+                ->where('discount_type', 'fixed')
+                ->where('discount_amount', 15)
+                ->where('has_active_discount', true)
+                ->where('current_price', 85)
+                ->etc()
+            )
+        );
     });
 });

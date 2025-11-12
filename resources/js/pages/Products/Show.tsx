@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { Activity, ArrowLeft, Calendar, DollarSign, Edit, Info, Package, ShoppingCart, TrendingUp } from 'lucide-react';
+import { Activity, ArrowLeft, Calendar, DollarSign, Edit, Info, Package, ShoppingCart, Tag, TrendingUp } from 'lucide-react';
 
 interface Category {
     id: number;
@@ -32,6 +32,14 @@ interface Product {
     category: Category;
     created_at: string;
     updated_at: string;
+    discount_active: boolean;
+    discount_type: 'percentage' | 'fixed' | null;
+    discount_percentage: string | null;
+    discount_amount: string | null;
+    discount_starts_at: string | null;
+    discount_ends_at: string | null;
+    has_active_discount: boolean;
+    current_price: string;
 }
 
 interface Customer {
@@ -145,10 +153,26 @@ export default function ProductShow({ product, recentOrders, statistics }: Props
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Current Price</CardTitle>
-                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                            {product.has_active_discount ? <Tag className="h-4 w-4 text-green-600" /> : <DollarSign className="h-4 w-4 text-muted-foreground" />}
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-green-600">{formatCurrency(product.price)}</div>
+                            <div className="flex flex-col gap-1">
+                                {product.has_active_discount ? (
+                                    <>
+                                        <div className="flex items-center gap-2">
+                                            <div className="text-2xl font-bold text-green-600">{formatCurrency(product.current_price)}</div>
+                                            <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                                                {product.discount_type === 'percentage' 
+                                                    ? `-${product.discount_percentage}%` 
+                                                    : `-${formatCurrency(product.discount_amount || '0')}`}
+                                            </Badge>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground line-through">Regular: {formatCurrency(product.price)}</p>
+                                    </>
+                                ) : (
+                                    <div className="text-2xl font-bold text-green-600">{formatCurrency(product.price)}</div>
+                                )}
+                            </div>
                             {product.cost_price && <p className="text-xs text-muted-foreground">Cost: {formatCurrency(product.cost_price)}</p>}
                         </CardContent>
                     </Card>
@@ -316,9 +340,51 @@ export default function ProductShow({ product, recentOrders, statistics }: Props
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
+                                {product.has_active_discount && (
+                                    <>
+                                        <div className="rounded-lg bg-green-50 p-3 dark:bg-green-950">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Tag className="h-4 w-4 text-green-600" />
+                                                <span className="text-sm font-semibold text-green-800 dark:text-green-200">Active Discount</span>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs text-green-700 dark:text-green-300">Type</span>
+                                                    <span className="text-sm font-medium text-green-900 dark:text-green-100">
+                                                        {product.discount_type === 'percentage' 
+                                                            ? `${product.discount_percentage}% Off` 
+                                                            : `${formatCurrency(product.discount_amount || '0')} Off`}
+                                                    </span>
+                                                </div>
+                                                {product.discount_starts_at && (
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs text-green-700 dark:text-green-300">Starts</span>
+                                                        <span className="text-xs text-green-900 dark:text-green-100">
+                                                            {new Date(product.discount_starts_at).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {product.discount_ends_at && (
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs text-green-700 dark:text-green-300">Ends</span>
+                                                        <span className="text-xs text-green-900 dark:text-green-100">
+                                                            {new Date(product.discount_ends_at).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between border-t pt-2">
+                                            <span className="text-sm text-muted-foreground">Discounted Price</span>
+                                            <span className="font-bold text-green-600">{formatCurrency(product.current_price)}</span>
+                                        </div>
+                                    </>
+                                )}
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm text-muted-foreground">Sale Price</span>
-                                    <span className="font-medium">{formatCurrency(product.price)}</span>
+                                    <span className="text-sm text-muted-foreground">{product.has_active_discount ? 'Regular Price' : 'Sale Price'}</span>
+                                    <span className={`font-medium ${product.has_active_discount ? 'line-through text-muted-foreground' : ''}`}>
+                                        {formatCurrency(product.price)}
+                                    </span>
                                 </div>
                                 {product.cost_price && (
                                     <>
@@ -330,7 +396,7 @@ export default function ProductShow({ product, recentOrders, statistics }: Props
                                             <span className="text-sm text-muted-foreground">Profit Margin</span>
                                             <span className="font-medium text-green-600">
                                                 {(
-                                                    ((parseFloat(product.price) - parseFloat(product.cost_price)) / parseFloat(product.price)) *
+                                                    ((parseFloat(product.has_active_discount ? product.current_price : product.price) - parseFloat(product.cost_price)) / parseFloat(product.has_active_discount ? product.current_price : product.price)) *
                                                     100
                                                 ).toFixed(1)}
                                                 %
