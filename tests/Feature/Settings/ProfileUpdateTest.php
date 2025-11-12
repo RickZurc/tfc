@@ -67,7 +67,7 @@ test('user can delete their account', function () {
         ->assertRedirect('/');
 
     $this->assertGuest();
-    
+
     // Since User uses soft deletes, check if the user is soft deleted
     expect($user->fresh()->deleted_at)->not->toBeNull();
     expect($user->withTrashed()->find($user->id)->deleted_at)->not->toBeNull();

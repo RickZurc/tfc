@@ -22,6 +22,7 @@ class OrderSeeder extends Seeder
 
         if ($customers->isEmpty() || $users->isEmpty()) {
             $this->command->warn('No customers or users found. Please run CustomerSeeder first.');
+
             return;
         }
 
@@ -30,7 +31,7 @@ class OrderSeeder extends Seeder
 
         // Generate random number of total orders between 80 and 200
         $totalOrders = fake()->numberBetween(80, 200);
-        
+
         // Calculate proportional counts
         $completedCount = (int) round($totalOrders * 0.70); // 70%
         $pendingCount = (int) round($totalOrders * 0.20);   // 20%
@@ -41,8 +42,8 @@ class OrderSeeder extends Seeder
             ->count($completedCount)
             ->completed()
             ->create([
-                'customer_id' => fn() => $customers->random()->id,
-                'user_id' => fn() => $users->random()->id,
+                'customer_id' => fn () => $customers->random()->id,
+                'user_id' => fn () => $users->random()->id,
             ]);
         $orders = $orders->merge($completedOrders);
 
@@ -51,8 +52,8 @@ class OrderSeeder extends Seeder
             ->count($pendingCount)
             ->pending()
             ->create([
-                'customer_id' => fn() => $customers->random()->id,
-                'user_id' => fn() => $users->random()->id,
+                'customer_id' => fn () => $customers->random()->id,
+                'user_id' => fn () => $users->random()->id,
             ]);
         $orders = $orders->merge($pendingOrders);
 
@@ -60,29 +61,29 @@ class OrderSeeder extends Seeder
         $refundedOrders = Order::factory()
             ->count($refundedCount)
             ->create([
-                'customer_id' => fn() => $customers->random()->id,
-                'user_id' => fn() => $users->random()->id,
+                'customer_id' => fn () => $customers->random()->id,
+                'user_id' => fn () => $users->random()->id,
                 'status' => 'refunded',
-                'refund_amount' => fn(array $attributes) => $attributes['total_amount'],
-                'refund_reason' => fn() => fake()->randomElement([
+                'refund_amount' => fn (array $attributes) => $attributes['total_amount'],
+                'refund_reason' => fn () => fake()->randomElement([
                     'Product defective',
                     'Customer not satisfied',
                     'Wrong item delivered',
-                    'Damaged during shipping'
+                    'Damaged during shipping',
                 ]),
-                'refunded_by' => fn() => $users->random()->id,
-                'refunded_at' => fn() => fake()->dateTimeThisMonth(),
-                'completed_at' => fn() => fake()->dateTimeThisMonth(),
+                'refunded_by' => fn () => $users->random()->id,
+                'refunded_at' => fn () => fake()->dateTimeThisMonth(),
+                'completed_at' => fn () => fake()->dateTimeThisMonth(),
             ]);
         $orders = $orders->merge($refundedOrders);
 
-        $this->command->info('Created ' . $orders->count() . ' orders (Target: ' . $totalOrders . '):');
+        $this->command->info('Created '.$orders->count().' orders (Target: '.$totalOrders.'):');
         $this->command->table(
             ['Status', 'Count', 'Percentage'],
             [
-                ['Completed', $orders->where('status', 'completed')->count(), round(($orders->where('status', 'completed')->count() / $orders->count()) * 100, 1) . '%'],
-                ['Pending', $orders->where('status', 'pending')->count(), round(($orders->where('status', 'pending')->count() / $orders->count()) * 100, 1) . '%'],
-                ['Refunded', $orders->where('status', 'refunded')->count(), round(($orders->where('status', 'refunded')->count() / $orders->count()) * 100, 1) . '%'],
+                ['Completed', $orders->where('status', 'completed')->count(), round(($orders->where('status', 'completed')->count() / $orders->count()) * 100, 1).'%'],
+                ['Pending', $orders->where('status', 'pending')->count(), round(($orders->where('status', 'pending')->count() / $orders->count()) * 100, 1).'%'],
+                ['Refunded', $orders->where('status', 'refunded')->count(), round(($orders->where('status', 'refunded')->count() / $orders->count()) * 100, 1).'%'],
             ]
         );
 

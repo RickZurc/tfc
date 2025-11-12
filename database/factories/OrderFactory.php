@@ -47,7 +47,7 @@ class OrderFactory extends Factory
      */
     private function generateOrderNumber(): string
     {
-        return 'ORD-' . date('Ymd') . '-' . $this->faker->unique()->numberBetween(1000, 9999);
+        return 'ORD-'.date('Ymd').'-'.$this->faker->unique()->numberBetween(1000, 9999);
     }
 
     /**

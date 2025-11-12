@@ -1,9 +1,9 @@
 <?php
 
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\POSController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\CategoryController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -44,7 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->sum('refund_amount');
 
         $totalRefunds = \App\Models\Order::whereNotNull('refunded_at')->count();
-        
+
         // Calculate refund rate
         $refundRate = $totalOrders > 0 ? ($totalRefunds / $totalOrders) * 100 : 0;
 
@@ -132,7 +132,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('categories', CategoryController::class);
     Route::patch('/categories/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('categories.toggle-status');
 
-    
     // Partial Refund Routes
     Route::post('order-items/{orderItem}/refund', [\App\Http\Controllers\RefundController::class, 'refundItem'])->name('order-items.refund');
     Route::get('orders/{order}/refund-history', [\App\Http\Controllers\RefundController::class, 'getRefundHistory'])->name('orders.refund-history');

@@ -564,15 +564,21 @@ export default function OrdersIndex() {
                   )}
                 </div>
               ) : (
-                orders.data.map((order) => (
-                  <Card key={order.id} className={`border-l-4 ${order.refund_amount ? 'border-l-red-500' : 'border-l-blue-500'}`}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-4">
-                            <div>
-                              <h3 className="font-semibold text-lg">{order.order_number}</h3>
-                              <p className="text-sm text-muted-foreground">
+                orders.data.map((order) => {
+                  // Determine border color based on refund status
+                  const isPartiallyRefunded = order.refund_amount && order.refund_amount < order.total_amount;
+                  const isFullyRefunded = order.refund_amount && order.refund_amount >= order.total_amount;
+                  const borderColor = isPartiallyRefunded ? 'border-l-yellow-500' : isFullyRefunded ? 'border-l-red-500' : 'border-l-blue-500';
+                  
+                  return (
+                    <Card key={order.id} className={`border-l-4 ${borderColor}`}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-4">
+                              <div>
+                                <h3 className="font-semibold text-lg">{order.order_number}</h3>
+                                <p className="text-sm text-muted-foreground">
                                 {formatDate(order.created_at)} • Cashier: {order.user.name}
                               </p>
                             </div>
@@ -771,7 +777,8 @@ export default function OrdersIndex() {
                       </div>
                     </CardContent>
                   </Card>
-                ))
+                  );
+                })
               )}
             </div>
 

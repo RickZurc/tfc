@@ -38,7 +38,7 @@ class StoreProductRequest extends FormRequest
             'dimensions' => ['nullable', 'string', 'max:100'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'is_active' => ['boolean'],
-            
+
             // Discount fields
             'discount_active' => ['sometimes', 'boolean'],
             'discount_type' => ['nullable', 'required_if:discount_active,true', 'in:percentage,fixed'],
@@ -68,7 +68,7 @@ class StoreProductRequest extends FormRequest
             'unit.required' => 'Product unit is required.',
             'unit.max' => 'Unit cannot exceed 50 characters.',
             'unit.string' => 'Unit must be a valid string.',
-            
+
             // Discount messages
             'discount_type.required_if' => 'Discount type is required when discount is active.',
             'discount_type.in' => 'Discount type must be either percentage or fixed amount.',

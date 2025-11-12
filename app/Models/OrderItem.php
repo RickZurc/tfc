@@ -73,20 +73,21 @@ class OrderItem extends Model
         return $this->refunded_quantity > 0 && $this->refunded_quantity < $this->quantity;
     }
 
-    public function canRefund(int $quantity = null): bool
+    public function canRefund(?int $quantity = null): bool
     {
         $quantityToRefund = $quantity ?? $this->remaining_quantity;
+
         return $quantityToRefund > 0 && ($this->refunded_quantity + $quantityToRefund) <= $this->quantity;
     }
 
     public function refundItem(int $quantity, string $reason, int $refundedBy): bool
     {
-        if (!$this->canRefund($quantity)) {
+        if (! $this->canRefund($quantity)) {
             return false;
         }
 
         $refundAmount = ($this->unit_price * $quantity);
-        
+
         $this->refunded_quantity += $quantity;
         $this->refunded_amount += $refundAmount;
         $this->refund_reason = $reason;

@@ -122,7 +122,7 @@ class ProductController extends Controller
 
         // Handle discount fields
         $validated['discount_active'] = $validated['discount_active'] ?? false;
-        
+
         if (! $validated['discount_active']) {
             // If discount is not active, clear all discount fields
             $validated['discount_type'] = null;
@@ -218,7 +218,7 @@ class ProductController extends Controller
 
         // Handle discount fields
         $validated['discount_active'] = $validated['discount_active'] ?? false;
-        
+
         if (! $validated['discount_active']) {
             // If discount is not active, clear all discount fields
             $validated['discount_type'] = null;
@@ -318,17 +318,17 @@ class ProductController extends Controller
     private function generateSKU(string $name): string
     {
         $base = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $name), 0, 6));
-        
+
         // If the base is empty (e.g., name has only special characters), use a default prefix
         if (empty($base)) {
             $base = 'PROD';
         }
-        
+
         // If the base is shorter than 3 characters, pad it to avoid very short SKUs
         if (strlen($base) < 3) {
             $base = str_pad($base, 3, 'X', STR_PAD_RIGHT);
         }
-        
+
         $counter = 1;
 
         do {

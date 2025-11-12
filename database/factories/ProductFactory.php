@@ -68,9 +68,9 @@ class ProductFactory extends Factory
         return [
             'category_id' => Category::factory(),
             'name' => $name,
-            'slug' => Str::slug($name) . '-' . $this->faker->unique()->numberBetween(1, 9999),
+            'slug' => Str::slug($name).'-'.$this->faker->unique()->numberBetween(1, 9999),
             'description' => $this->faker->sentence($this->faker->numberBetween(6, 15)),
-            'sku' => strtoupper(Str::random(3)) . '-' . $this->faker->unique()->numberBetween(1000, 9999),
+            'sku' => strtoupper(Str::random(3)).'-'.$this->faker->unique()->numberBetween(1000, 9999),
             'barcode' => $this->faker->optional(0.7)->ean13(),
             'price' => $price,
             'cost_price' => $costPrice,
@@ -92,8 +92,8 @@ class ProductFactory extends Factory
         return $this->state(function (array $attributes) use ($category) {
             $categoryName = $category->name;
             $template = self::$productTemplates[$categoryName] ?? null;
-            
-            if (!$template) {
+
+            if (! $template) {
                 // Fallback for unknown categories
                 return [
                     'category_id' => $category->id,
@@ -103,19 +103,19 @@ class ProductFactory extends Factory
             // Get random product name and add variation
             $baseName = $this->faker->randomElement($template['names']);
             $variations = ['', ' - Premium', ' - Standard', ' - Deluxe', ' - Classic', ' Pro', ' Max', ' Plus'];
-            $productName = $baseName . $this->faker->randomElement($variations);
+            $productName = $baseName.$this->faker->randomElement($variations);
 
             // Calculate realistic pricing for this category
             $priceRange = $template['price_range'];
             $price = $this->faker->randomFloat(2, $priceRange[0], $priceRange[1]);
-            
+
             $costMultiplier = $template['cost_multiplier'];
             $costPrice = $price * $this->faker->randomFloat(2, $costMultiplier[0], $costMultiplier[1]);
 
             return [
                 'category_id' => $category->id,
                 'name' => $productName,
-                'slug' => Str::slug($productName) . '-' . $this->faker->unique()->numberBetween(1, 9999),
+                'slug' => Str::slug($productName).'-'.$this->faker->unique()->numberBetween(1, 9999),
                 'price' => $price,
                 'cost_price' => round($costPrice, 2),
                 'unit' => $this->faker->randomElement($template['units']),
@@ -177,9 +177,9 @@ class ProductFactory extends Factory
         return $this->state(function (array $attributes) {
             $costPrice = $this->faker->randomFloat(2, 50, 200);
             $markup = $this->faker->randomFloat(2, 1.5, 2.5);
-            
+
             return [
-                'name' => $attributes['name'] . ' - Premium',
+                'name' => $attributes['name'].' - Premium',
                 'cost_price' => $costPrice,
                 'price' => round($costPrice * $markup, 2),
                 'tax_rate' => $this->faker->randomElement([10.00, 15.00]),
@@ -195,9 +195,9 @@ class ProductFactory extends Factory
         return $this->state(function (array $attributes) {
             $costPrice = $this->faker->randomFloat(2, 1, 20);
             $markup = $this->faker->randomFloat(2, 1.2, 2.0);
-            
+
             return [
-                'name' => $attributes['name'] . ' - Budget',
+                'name' => $attributes['name'].' - Budget',
                 'cost_price' => $costPrice,
                 'price' => round($costPrice * $markup, 2),
                 'tax_rate' => $this->faker->randomElement([0.00, 5.00]),

@@ -17,7 +17,7 @@ class CategorySeeder extends Seeder
         // Create all predefined categories using the factory templates
         $categories = Category::factory()->allCategories();
 
-        $this->command->info('Created ' . count($categories) . ' categories:');
+        $this->command->info('Created '.count($categories).' categories:');
         foreach ($categories as $category) {
             $this->command->line("  • {$category->name} ({$category->slug}) - {$category->icon}");
         }

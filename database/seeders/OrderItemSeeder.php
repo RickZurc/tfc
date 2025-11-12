@@ -21,6 +21,7 @@ class OrderItemSeeder extends Seeder
 
         if ($orders->isEmpty() || $products->isEmpty()) {
             $this->command->warn('No orders or active products found. Please run OrderSeeder and ProductSeeder first.');
+
             return;
         }
 
@@ -66,13 +67,21 @@ class OrderItemSeeder extends Seeder
             $discountAmount = $order->discount_amount ?? 0;
             $finalTotal = $orderSubtotal + $orderTaxAmount - $discountAmount;
 
-            $order->update([
+            // If order has a refund amount, ensure it doesn't exceed the new total
+            $updateData = [
                 'subtotal' => $orderSubtotal,
                 'tax_amount' => $orderTaxAmount,
                 'total_amount' => $finalTotal,
                 'amount_paid' => $order->status === 'pending' ? 0 : $finalTotal + fake()->randomFloat(2, 0, 10),
                 'change_amount' => $order->status === 'pending' ? 0 : fake()->randomFloat(2, 0, 5),
-            ]);
+            ];
+
+            // Adjust refund_amount if it exceeds the new total_amount
+            if ($order->refund_amount !== null && $order->refund_amount > $finalTotal) {
+                $updateData['refund_amount'] = $finalTotal;
+            }
+
+            $order->update($updateData);
         }
 
         $this->command->info("Created $totalItems order items across {$orders->count()} orders:");

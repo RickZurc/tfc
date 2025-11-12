@@ -60,6 +60,16 @@ class RefundOrderRequest extends FormRequest
             if ($order && ! $order->canBeRefunded()) {
                 $validator->errors()->add('order', 'This order cannot be refunded.');
             }
+
+            // Ensure refund amount never exceeds the order total
+            if ($order && $this->refund_amount > $order->total_amount) {
+                $validator->errors()->add('refund_amount', 'Refund amount cannot exceed the order total amount.');
+            }
+
+            // Additional check: if order already has a refund, ensure we don't double-refund
+            if ($order && $order->refund_amount !== null) {
+                $validator->errors()->add('order', 'This order has already been refunded.');
+            }
         });
     }
 }

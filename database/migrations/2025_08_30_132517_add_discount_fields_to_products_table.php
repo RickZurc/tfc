@@ -33,7 +33,7 @@ return new class extends Migration
                 'discount_type',
                 'discount_starts_at',
                 'discount_ends_at',
-                'discount_active'
+                'discount_active',
             ]);
         });
     }

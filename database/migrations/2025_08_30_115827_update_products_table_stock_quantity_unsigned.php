@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -17,7 +17,7 @@ return new class extends Migration
             DB::table('products')
                 ->where('stock_quantity', '<', 0)
                 ->update(['stock_quantity' => 0]);
-            
+
             // Then modify the column to be unsigned
             $table->integer('stock_quantity')->unsigned()->default(0)->change();
         });

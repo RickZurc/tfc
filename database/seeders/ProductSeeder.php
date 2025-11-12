@@ -15,9 +15,10 @@ class ProductSeeder extends Seeder
     {
         // Get available categories
         $categories = Category::all();
-        
+
         if ($categories->isEmpty()) {
             $this->command->warn('No categories found. Please run CategorySeeder first.');
+
             return;
         }
 
@@ -25,7 +26,7 @@ class ProductSeeder extends Seeder
 
         foreach ($categories as $category) {
             $this->command->info("Creating products for category: {$category->name}");
-            
+
             // Create 4-6 regular products per category
             $regularCount = fake()->numberBetween(4, 6);
             Product::factory()
@@ -35,14 +36,14 @@ class ProductSeeder extends Seeder
 
             // Create 1-2 special state products for variety (10% of total)
             $specialCount = fake()->numberBetween(0, 2);
-            
+
             if ($specialCount > 0) {
                 // Mix of different states for more realistic data
                 $states = ['outOfStock', 'lowStock', 'inactive', 'noStockTracking'];
-                
+
                 for ($i = 0; $i < $specialCount; $i++) {
                     $state = fake()->randomElement($states);
-                    
+
                     Product::factory()
                         ->forCategory($category)
                         ->{$state}()
@@ -69,13 +70,13 @@ class ProductSeeder extends Seeder
 
         $totalProducts = Product::count();
         $this->command->info("Successfully created {$totalProducts} products across {$categories->count()} categories!");
-        
+
         // Show some statistics
         $activeProducts = Product::where('is_active', true)->count();
         $trackingStock = Product::where('track_stock', true)->count();
         $outOfStock = Product::where('track_stock', true)->where('stock_quantity', 0)->count();
         $lowStock = Product::whereRaw('track_stock = true AND stock_quantity <= min_stock_level')->count();
-        
+
         $this->command->table(
             ['Metric', 'Count'],
             [

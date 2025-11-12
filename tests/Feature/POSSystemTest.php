@@ -81,7 +81,7 @@ test('can create order through pos', function () {
     expect($order->payment_method)->toBe('cash');
     expect($order->status)->toBe('completed');
     expect($order->amount_paid)->toBe('220.00');
-    
+
     // Verify the calculated total based on actual product price * quantity
     $expectedSubtotal = (string) ($product->price * 2); // 2 items, convert to string
     expect($order->subtotal)->toBe($expectedSubtotal);

@@ -92,7 +92,7 @@ class StorePOSOrderRequest extends FormRequest
 
         foreach ($this->items as $index => $item) {
             $product = Product::find($item['product_id']);
-            if (!$product) {
+            if (! $product) {
                 continue; // Product validation will catch this
             }
 

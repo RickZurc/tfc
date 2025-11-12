@@ -41,7 +41,7 @@ class UpdateProductRequest extends FormRequest
             'dimensions' => ['nullable', 'string', 'max:100'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'is_active' => ['boolean'],
-            
+
             // Discount fields
             'discount_active' => ['sometimes', 'boolean'],
             'discount_type' => ['nullable', 'required_if:discount_active,true', 'in:percentage,fixed'],
@@ -71,7 +71,7 @@ class UpdateProductRequest extends FormRequest
             'barcode.unique' => 'This barcode is already in use.',
             'stock_quantity.required_if' => 'Stock quantity is required when stock tracking is enabled.',
             'min_stock_level.required_if' => 'Minimum stock level is required when stock tracking is enabled.',
-            
+
             // Discount messages
             'discount_type.required_if' => 'Discount type is required when discount is active.',
             'discount_type.in' => 'Discount type must be either percentage or fixed amount.',

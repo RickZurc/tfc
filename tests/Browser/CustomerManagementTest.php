@@ -4,7 +4,6 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-
 use Illuminate\Support\Facades\Auth;
 
 uses(RefreshDatabase::class);

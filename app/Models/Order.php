@@ -110,7 +110,7 @@ class Order extends Model
 
     public function processRefund(float $refundAmount, string $reason, int $refundedByUserId): bool
     {
-        if (!$this->canBeRefunded()) {
+        if (! $this->canBeRefunded()) {
             return false;
         }
 
@@ -163,14 +163,14 @@ class Order extends Model
     public function refundItem(int $orderItemId, int $quantity, string $reason, int $refundedByUserId): bool
     {
         $orderItem = $this->items()->find($orderItemId);
-        
-        if (!$orderItem || !$orderItem->canRefund($quantity)) {
+
+        if (! $orderItem || ! $orderItem->canRefund($quantity)) {
             return false;
         }
 
         // Calculate refund amount for this quantity
         $refundAmount = ($orderItem->unit_price * $quantity);
-        
+
         // Update order item
         $orderItem->update([
             'refunded_quantity' => $orderItem->refunded_quantity + $quantity,

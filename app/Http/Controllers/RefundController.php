@@ -18,12 +18,12 @@ class RefundController extends Controller
         ]);
 
         $quantity = (int) $request->quantity;
-        
+
         // Check if the quantity can be refunded
-        if (!$orderItem->canRefund($quantity)) {
+        if (! $orderItem->canRefund($quantity)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot refund the requested quantity. Available for refund: ' . $orderItem->remaining_quantity
+                'message' => 'Cannot refund the requested quantity. Available for refund: '.$orderItem->remaining_quantity,
             ], 400);
         }
 
@@ -39,7 +39,7 @@ class RefundController extends Controller
 
             if ($success) {
                 DB::commit();
-                
+
                 return response()->json([
                     'success' => true,
                     'message' => "Successfully refunded {$quantity} unit(s) of {$orderItem->product_name}",
@@ -47,17 +47,18 @@ class RefundController extends Controller
                 ]);
             } else {
                 DB::rollBack();
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to process refund'
+                    'message' => 'Failed to process refund',
                 ], 400);
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while processing the refund: ' . $e->getMessage()
+                'message' => 'An error occurred while processing the refund: '.$e->getMessage(),
             ], 500);
         }
     }

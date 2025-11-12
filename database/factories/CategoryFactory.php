@@ -87,12 +87,12 @@ class CategoryFactory extends Factory
 
         return [
             'name' => $name,
-            'slug' => Str::slug($name) . '-' . $this->faker->unique()->numberBetween(1, 999),
+            'slug' => Str::slug($name).'-'.$this->faker->unique()->numberBetween(1, 999),
             'description' => $this->faker->optional(0.8)->sentence(),
             'color' => $this->faker->hexColor(),
             'icon' => $this->faker->optional(0.9)->randomElement([
-                'package', 'shopping-cart', 'tag', 'star', 'heart', 'home', 'coffee', 
-                'smartphone', 'laptop', 'book', 'car', 'dumbbell', 'briefcase'
+                'package', 'shopping-cart', 'tag', 'star', 'heart', 'home', 'coffee',
+                'smartphone', 'laptop', 'book', 'car', 'dumbbell', 'briefcase',
             ]),
             'is_active' => $this->faker->boolean(95), // 95% chance of being active
         ];
@@ -105,7 +105,7 @@ class CategoryFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             $template = $this->faker->randomElement(self::$categoryTemplates);
-            
+
             return [
                 'name' => $template['name'],
                 'slug' => Str::slug($template['name']),
@@ -125,8 +125,8 @@ class CategoryFactory extends Factory
         return $this->state(function (array $attributes) use ($categoryName) {
             $template = collect(self::$categoryTemplates)
                 ->firstWhere('name', $categoryName);
-            
-            if (!$template) {
+
+            if (! $template) {
                 // Fallback if category name not found
                 return [
                     'name' => $categoryName,
@@ -136,7 +136,7 @@ class CategoryFactory extends Factory
                     'icon' => $this->faker->randomElement(['package', 'tag', 'star']),
                 ];
             }
-            
+
             return [
                 'name' => $template['name'],
                 'slug' => Str::slug($template['name']),
@@ -154,7 +154,7 @@ class CategoryFactory extends Factory
     public function allCategories(): array
     {
         $categories = [];
-        
+
         foreach (self::$categoryTemplates as $template) {
             // Use firstOrCreate to avoid duplicates
             $category = \App\Models\Category::firstOrCreate(
@@ -168,10 +168,10 @@ class CategoryFactory extends Factory
                     'is_active' => true,
                 ]
             );
-            
+
             $categories[] = $category;
         }
-        
+
         return $categories;
     }
 
