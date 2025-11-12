@@ -53,6 +53,11 @@ class Product extends Model
         'discount_active',
     ];
 
+    protected $appends = [
+        'has_active_discount',
+        'current_price',
+    ];
+
     /**
      * The attributes that should be validated before saving.
      */

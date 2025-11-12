@@ -145,15 +145,31 @@ export default function ProductEdit({ product, categories }: Props) {
 
         // Convert form data to the format expected by Laravel
         const submitData = {
-            ...formData,
+            name: formData.name,
+            description: formData.description,
             category_id: formData.category_id ? parseInt(formData.category_id) : null,
             price: formData.price ? parseFloat(formData.price) : null,
             cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
+            sku: formData.sku,
+            barcode: formData.barcode || null,
+            unit: formData.unit || null,
             weight: formData.weight ? parseFloat(formData.weight) : null,
+            dimensions: formData.dimensions || null,
+            track_stock: formData.track_stock,
             stock_quantity: formData.track_stock && formData.stock_quantity ? parseInt(formData.stock_quantity) : null,
             min_stock_level: formData.track_stock && formData.min_stock_level ? parseInt(formData.min_stock_level) : null,
             max_stock_level: formData.track_stock && formData.max_stock_level ? parseInt(formData.max_stock_level) : null,
+            is_active: formData.is_active,
             tax_rate: formData.tax_rate ? parseFloat(formData.tax_rate) : 0,
+            
+            // Discount fields
+            discount_active: formData.discount_active,
+            discount_type: formData.discount_active ? formData.discount_type : null,
+            discount_percentage: formData.discount_active && formData.discount_type === 'percentage' && formData.discount_percentage ? parseFloat(formData.discount_percentage) : null,
+            discount_amount: formData.discount_active && formData.discount_type === 'fixed' && formData.discount_amount ? parseFloat(formData.discount_amount) : null,
+            discount_starts_at: formData.discount_active && formData.discount_starts_at ? formData.discount_starts_at : null,
+            discount_ends_at: formData.discount_active && formData.discount_ends_at ? formData.discount_ends_at : null,
+            
             _method: 'PUT',
         };
 

@@ -85,7 +85,14 @@ class POSController extends Controller
 
         $order->markAsCompleted();
 
-        return response()->json([
+        // Return Inertia response instead of JSON for Inertia router compatibility
+        return Inertia::render('POS/Index', [
+            'categories' => Category::with('activeProducts')
+                ->where('is_active', true)
+                ->get(),
+            'products' => Product::with('category')
+                ->where('is_active', true)
+                ->get(),
             'success' => true,
             'order' => $order->load('items.product', 'customer'),
             'message' => 'Order created successfully',

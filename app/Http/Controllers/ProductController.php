@@ -120,6 +120,18 @@ class ProductController extends Controller
             $validated['max_stock_level'] = null; // This one can be null
         }
 
+        // Handle discount fields
+        $validated['discount_active'] = $validated['discount_active'] ?? false;
+        
+        if (! $validated['discount_active']) {
+            // If discount is not active, clear all discount fields
+            $validated['discount_type'] = null;
+            $validated['discount_percentage'] = null;
+            $validated['discount_amount'] = null;
+            $validated['discount_starts_at'] = null;
+            $validated['discount_ends_at'] = null;
+        }
+
         $product = Product::create($validated);
 
         return redirect()
@@ -202,6 +214,18 @@ class ProductController extends Controller
             // If tracking stock, ensure required fields have defaults
             $validated['stock_quantity'] = $validated['stock_quantity'] ?? 0;
             $validated['min_stock_level'] = $validated['min_stock_level'] ?? 0;
+        }
+
+        // Handle discount fields
+        $validated['discount_active'] = $validated['discount_active'] ?? false;
+        
+        if (! $validated['discount_active']) {
+            // If discount is not active, clear all discount fields
+            $validated['discount_type'] = null;
+            $validated['discount_percentage'] = null;
+            $validated['discount_amount'] = null;
+            $validated['discount_starts_at'] = null;
+            $validated['discount_ends_at'] = null;
         }
 
         $product->update($validated);

@@ -316,95 +316,88 @@ export default function POSIndex() {
       return;
     }
     
-    try {
-      // Get fresh CSRF token from the meta tag
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      
-      if (!csrfToken) {
-        throw new Error('CSRF token not found. Please refresh the page.');
-      }
-
-      const response = await fetch('/pos/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken,
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          items: cart.map(item => ({
-            product_id: item.id,
-            quantity: item.quantity
-          })),
-          payment_method: paymentMethod,
-          amount_paid: amountPaidNum,
-          discount_amount: discount,
-          discount_type: discountType,
-          discount_input: parseFloat(discountAmount) || 0,
-        }),
-      });
-
-      if (!response.ok) {
-        // Handle non-2xx responses
-        if (response.status === 419) {
-          throw new Error('Session expired. Please refresh the page and try again.');
-        }
+    // Use Inertia router for proper CSRF and session handling
+    router.post('/pos/orders', {
+      items: cart.map(item => ({
+        product_id: item.id,
+        quantity: item.quantity
+      })),
+      payment_method: paymentMethod,
+      amount_paid: amountPaidNum,
+      discount_amount: discount,
+      discount_type: discountType,
+      discount_input: parseFloat(discountAmount) || 0,
+    }, {
+      preserveState: true,
+      onSuccess: (page) => {
+        // Access the order from the response data - now using Inertia props
+        const result = page.props as any;
         
-        // Try to get error message from response
-        const errorText = await response.text();
-        console.error('Server error response:', errorText);
-        throw new Error(`Server error (${response.status}). Please try again.`);
-      }
+        if (result.success && result.order) {
+          // Store cart information before clearing
+          const orderSummary = {
+            ...result.order,
+            itemCount: cart.reduce((sum, item) => sum + item.quantity, 0),
+            originalSubtotal: subtotal,
+            originalDiscount: discount,
+            change_amount: result.change_amount
+          };
+          
+          setCompletedOrder(orderSummary);
+          
+          // Clear cart completely (including localStorage)
+          clearCart();
 
-      const result = await response.json();
+          // Clear search query
+          setSearchQuery('');
 
-      if (result.success !== false) {
-        // Store cart information before clearing
-        const orderSummary = {
-          ...result.order,
-          itemCount: cart.reduce((sum, item) => sum + item.quantity, 0),
-          originalSubtotal: subtotal,
-          originalDiscount: discount,
-          change_amount: result.change_amount
-        };
-        
-        setCompletedOrder(orderSummary);
-        
-        // Clear cart completely (including localStorage)
-        clearCart();
+          // Reset all form fields
+          setAmountPaid('');
+          setDiscountAmount('0');
+          setDiscountType('numerical');
+          setPaymentMethod('cash');
+          setCustomerId(undefined);
+          setPaymentError('');
+          setValidationErrors({});
+          setSaleCompleted(true);
 
-        // CClear search query
-        setSearchQuery('');
-
-        // Reset all form fields
-        setAmountPaid('');
-        setDiscountAmount('0');
-        setDiscountType('numerical');
-        setPaymentMethod('cash');
-        setCustomerId(undefined);
-        setPaymentError('');
-        setValidationErrors({});
-        setSaleCompleted(true);
-
-        // Clear server backup as well
-        try {
-          await fetch('/api/pos/clear-cart', { method: 'DELETE' });
-        } catch (error) {
-          console.error('Failed to clear server backup:', error);
+          // Clear server backup as well
+          fetch('/api/pos/clear-cart', { method: 'DELETE' })
+            .catch(error => {
+              console.error('Failed to clear server backup:', error);
+            });
         }
-      } else {
-        // Handle validation errors or payment insufficient error
-        if (result.errors) {
-          setValidationErrors(result.errors);
-        }
-        if (result.message) {
-          setPaymentError(result.message);
+      },
+      onError: (errors) => {
+        console.error('Checkout error:', errors);
+        
+        // Handle validation errors - convert Inertia errors to our format
+        if (typeof errors === 'object' && errors !== null) {
+          const validationErrors: Record<string, string[]> = {};
+          
+          // Convert Inertia errors format
+          Object.entries(errors).forEach(([key, value]) => {
+            if (typeof value === 'string') {
+              validationErrors[key] = [value];
+            } else if (Array.isArray(value)) {
+              validationErrors[key] = value;
+            }
+          });
+          
+          setValidationErrors(validationErrors);
+          
+          // Show first error as payment error
+          const firstErrorArray = Object.values(validationErrors)[0];
+          if (firstErrorArray && firstErrorArray.length > 0) {
+            setPaymentError(firstErrorArray[0]);
+          }
+        } else if (typeof errors === 'string') {
+          setPaymentError(errors);
+        } else {
+          setPaymentError('Failed to process order. Please try again.');
         }
       }
-    } catch (error) {
-      console.error('Checkout error:', error);
-      setPaymentError('Failed to process order. Please try again.');
-    }
+    });
   };
 
   // Manual save to server
