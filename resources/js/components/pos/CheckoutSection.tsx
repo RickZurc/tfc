@@ -7,7 +7,7 @@ import { PaymentMethod } from '@/types/pos';
 // Helper function to safely format currency
 const formatCurrency = (value: number | string): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
-    return isNaN(num) ? '0.00' : num.toFixed(2);
+    return isNaN(num) ? '0.00 €' : num.toFixed(2) + ' €';
 };
 
 interface CheckoutSectionProps {
@@ -98,14 +98,14 @@ export default function CheckoutSection({
                 {/* Change Display */}
                 {change > 0 && (
                     <div className="rounded-md border border-green-200 bg-green-50 p-2">
-                        <p className="text-sm font-medium text-green-800">Change: ${formatCurrency(change)}</p>
+                        <p className="text-sm font-medium text-green-800">Change: {formatCurrency(change)}</p>
                     </div>
                 )}
 
                 {/* Insufficient Payment Warning */}
                 {!isPaymentSufficient && amountPaidNum > 0 && !paymentError && (
                     <div className="rounded-md border border-yellow-200 bg-yellow-50 p-2">
-                        <p className="text-sm font-medium text-yellow-800">Need ${formatCurrency(total - amountPaidNum)} more</p>
+                        <p className="text-sm font-medium text-yellow-800">Need {formatCurrency(total - amountPaidNum)} more</p>
                     </div>
                 )}
 

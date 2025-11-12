@@ -19,7 +19,7 @@ import { CartItem } from '@/types/pos';
 // Helper function to safely format currency
 const formatCurrency = (value: any): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value;
-  return isNaN(num) ? '0.00' : num.toFixed(2);
+  return isNaN(num) ? '0.00 €' : num.toFixed(2) + ' €';
 };
 
 type PaymentMethod = 'cash' | 'card' | 'digital';
@@ -97,7 +97,7 @@ export default function CartDisplay({
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{item.name}</p>
                     <div className="flex items-center gap-2">
-                      <p className="text-xs text-muted-foreground">${formatCurrency(item.price)} each</p>
+                      <p className="text-xs text-muted-foreground">{formatCurrency(item.price)} each</p>
                       {item.has_active_discount && (
                         <Badge variant="destructive" className="text-xs px-1 py-0">
                           -{Math.round(item.discount_percentage || 0)}% OFF
@@ -139,7 +139,7 @@ export default function CartDisplay({
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
-                <span>${formatCurrency(subtotal)}</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
               
               <div className="space-y-2">
@@ -152,7 +152,7 @@ export default function CartDisplay({
                       onClick={() => onDiscountTypeChange('numerical')}
                       className="text-xs px-2 py-1 h-6"
                     >
-                      $
+                      €
                     </Button>
                     <Button
                       size="sm"
@@ -177,11 +177,11 @@ export default function CartDisplay({
                     placeholder={discountType === 'percentage' ? '0-100' : '0.00'}
                   />
                   <span className="text-sm text-muted-foreground">
-                    {discountType === 'percentage' ? '%' : '$'}
+                    {discountType === 'percentage' ? '%' : '€'}
                   </span>
                   {discount > 0 && (
                     <span className="text-sm text-green-600">
-                      (-${formatCurrency(discount)})
+                      (-{formatCurrency(discount)})
                     </span>
                   )}
                 </div>
@@ -189,7 +189,7 @@ export default function CartDisplay({
 
               <div className="flex justify-between font-bold text-lg border-t pt-3">
                 <span>Total:</span>
-                <span className="text-primary">${formatCurrency(total)}</span>
+                <span className="text-primary">{formatCurrency(total)}</span>
               </div>
             </div>
 
@@ -265,7 +265,7 @@ export default function CartDisplay({
               {change > 0 && (
                 <div className="bg-green-50 border border-green-200 rounded-md p-2">
                   <p className="text-sm font-medium text-green-800">
-                    Change: ${formatCurrency(change)}
+                    Change: {formatCurrency(change)}
                   </p>
                 </div>
               )}
@@ -274,7 +274,7 @@ export default function CartDisplay({
               {!isPaymentSufficient && amountPaidNum > 0 && !paymentError && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-2">
                   <p className="text-sm font-medium text-yellow-800">
-                    Need ${formatCurrency(total - amountPaidNum)} more
+                    Need {formatCurrency(total - amountPaidNum)} more
                   </p>
                 </div>
               )}
@@ -311,7 +311,7 @@ export default function CartDisplay({
                 : !amountPaid 
                 ? 'Enter Payment Amount'
                 : !isPaymentSufficient 
-                ? `Need $${formatCurrency(total - amountPaidNum)} More`
+                ? `Need ${formatCurrency(total - amountPaidNum)} More`
                 : 'Complete Sale'
               }
             </Button>

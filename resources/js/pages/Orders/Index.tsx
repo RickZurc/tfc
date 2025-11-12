@@ -48,7 +48,7 @@ import { type BreadcrumbItem } from '@/types';
 // Helper function to safely format currency
 const formatCurrency = (value: any): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value;
-  return isNaN(num) ? '0.00' : num.toFixed(2);
+  return isNaN(num) ? '0.00 €' : num.toFixed(2) + ' €';
 };
 
 // Helper function to format date without timezone conversion
@@ -335,25 +335,25 @@ export default function OrdersIndex() {
               <div class="item">
                 <div class="row">
                   <span>${item.product_name}</span>
-                  <span>${item.quantity}x $${formatCurrency(item.unit_price)}</span>
+                  <span>${item.quantity}x ${formatCurrency(item.unit_price)}</span>
                 </div>
                 <div class="row">
                   <span></span>
-                  <span>$${formatCurrency(item.total_price)}</span>
+                  <span>${formatCurrency(item.total_price)}</span>
                 </div>
               </div>
             `).join('')}
             <div class="row">
               <span>Subtotal:</span>
-              <span>$${formatCurrency(order.total_amount + order.discount_amount)}</span>
+              <span>${formatCurrency(order.total_amount + order.discount_amount)}</span>
             </div>
             <div class="row">
               <span>Discount:</span>
-              <span>-$${formatCurrency(order.discount_amount)}</span>
+              <span>-${formatCurrency(order.discount_amount)}</span>
             </div>
             <div class="row total">
               <span>TOTAL:</span>
-              <span>$${formatCurrency(order.total_amount)}</span>
+              <span>${formatCurrency(order.total_amount)}</span>
             </div>
             <div class="row">
               <span>Payment:</span>
@@ -427,7 +427,7 @@ export default function OrdersIndex() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
-                  <p className="text-2xl font-bold">${formatCurrency(stats.total_sales)}</p>
+                  <p className="text-2xl font-bold">{formatCurrency(stats.total_sales)}</p>
                 </div>
                 <DollarSign className="h-8 w-8 text-green-600" />
               </div>
@@ -451,7 +451,7 @@ export default function OrdersIndex() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Today's Sales</p>
-                  <p className="text-2xl font-bold">${formatCurrency(stats.today_sales)}</p>
+                  <p className="text-2xl font-bold">{formatCurrency(stats.today_sales)}</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-orange-600" />
               </div>
@@ -588,7 +588,7 @@ export default function OrdersIndex() {
                             </div>
                             <div>
                               <span className="text-muted-foreground">Total:</span>
-                              <span className="ml-2 font-bold text-green-600">${formatCurrency(order.total_amount)}</span>
+                              <span className="ml-2 font-bold text-green-600">{formatCurrency(order.total_amount)}</span>
                             </div>
                             <div>
                               <span className="text-muted-foreground">Payment:</span>
@@ -597,7 +597,7 @@ export default function OrdersIndex() {
                             {order.refund_amount && (
                               <div>
                                 <span className="text-muted-foreground">Refunded:</span>
-                                <span className="ml-2 font-medium text-red-600">${formatCurrency(order.refund_amount)}</span>
+                                <span className="ml-2 font-medium text-red-600">{formatCurrency(order.refund_amount)}</span>
                               </div>
                             )}
                             {order.customer && (
@@ -660,10 +660,10 @@ export default function OrdersIndex() {
                                           <div>
                                             <p className="font-medium">{item.product_name}</p>
                                             <p className="text-sm text-muted-foreground">
-                                              {item.quantity} × ${formatCurrency(item.unit_price)}
+                                              {item.quantity} × {formatCurrency(item.unit_price)}
                                             </p>
                                           </div>
-                                          <p className="font-semibold">${formatCurrency(item.total_price)}</p>
+                                          <p className="font-semibold">{formatCurrency(item.total_price)}</p>
                                         </div>
                                       ))}
                                     </div>
@@ -676,25 +676,25 @@ export default function OrdersIndex() {
                                     <div className="space-y-2">
                                       <div className="flex justify-between">
                                         <span>Subtotal:</span>
-                                        <span>${formatCurrency(selectedOrder.total_amount + selectedOrder.discount_amount)}</span>
+                                        <span>{formatCurrency(selectedOrder.total_amount + selectedOrder.discount_amount)}</span>
                                       </div>
                                       {selectedOrder.discount_amount > 0 && (
                                         <div className="flex justify-between text-red-600">
                                           <span>Discount:</span>
-                                          <span>-${formatCurrency(selectedOrder.discount_amount)}</span>
+                                          <span>-{formatCurrency(selectedOrder.discount_amount)}</span>
                                         </div>
                                       )}
                                       <Separator />
                                       <div className="flex justify-between text-lg font-bold">
                                         <span>Total:</span>
-                                        <span>${formatCurrency(selectedOrder.total_amount)}</span>
+                                        <span>{formatCurrency(selectedOrder.total_amount)}</span>
                                       </div>
                                       {selectedOrder.refund_amount && (
                                         <>
                                           <Separator />
                                           <div className="flex justify-between text-red-600">
                                             <span>Refund Amount:</span>
-                                            <span>-${formatCurrency(selectedOrder.refund_amount)}</span>
+                                            <span>-{formatCurrency(selectedOrder.refund_amount)}</span>
                                           </div>
                                           {selectedOrder.refund_reason && (
                                             <div className="text-sm text-muted-foreground">
@@ -811,7 +811,7 @@ export default function OrdersIndex() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="font-medium">Order Total:</span>
-                  <p>${formatCurrency(refundOrder.total_amount)}</p>
+                  <p>{formatCurrency(refundOrder.total_amount)}</p>
                 </div>
                 <div>
                   <span className="font-medium">Payment Method:</span>
@@ -834,7 +834,7 @@ export default function OrdersIndex() {
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  Maximum refund: ${formatCurrency(refundOrder.total_amount)}
+                  Maximum refund: {formatCurrency(refundOrder.total_amount)}
                 </p>
               </div>
 

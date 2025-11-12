@@ -10,7 +10,7 @@ import { Activity, AlertTriangle, BarChart3, Calendar, DollarSign, Package, Rota
 // Helper function to safely format numbers
 const formatCurrency = (value: number | string): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
-    return isNaN(num) ? '0.00' : num.toFixed(2);
+    return isNaN(num) ? '0.00 €' : num.toFixed(2) + ' €';
 };
 
 const formatNumber = (value: number | string, decimals: number = 1): string => {
@@ -91,7 +91,7 @@ function SimpleBarChart({ data, title }: { data: DailySales[]; title: string }) 
                         <div key={index} className="space-y-1">
                             <div className="flex justify-between text-sm">
                                 <span>{new Date(item.date).toLocaleDateString()}</span>
-                                <span className="font-medium">${formatCurrency(item.total)}</span>
+                                <span className="font-medium">{formatCurrency(item.total)}</span>
                             </div>
                             <Progress value={(item.total / maxValue) * 100} className="h-2" />
                             <div className="text-xs text-muted-foreground">{item.orders} orders</div>
@@ -126,7 +126,7 @@ function PieChart({ data, title }: { data: CategorySales[]; title: string }) {
                                         <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
                                         {item.category}
                                     </span>
-                                    <span className="font-medium">${formatCurrency(salesValue)}</span>
+                                    <span className="font-medium">{formatCurrency(salesValue)}</span>
                                 </div>
                                 <Progress
                                     value={percentage}
@@ -161,7 +161,7 @@ export default function Dashboard() {
                             <DollarSign className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-green-600">${formatCurrency(statistics.todaySales)}</div>
+                            <div className="text-2xl font-bold text-green-600">{formatCurrency(statistics.todaySales)}</div>
                             <p className="text-xs text-muted-foreground">Revenue generated today</p>
                         </CardContent>
                     </Card>
@@ -173,7 +173,7 @@ export default function Dashboard() {
                             <TrendingUp className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-blue-600">${formatCurrency(statistics.weekSales)}</div>
+                            <div className="text-2xl font-bold text-blue-600">{formatCurrency(statistics.weekSales)}</div>
                             <p className="text-xs text-muted-foreground">Week to date sales</p>
                         </CardContent>
                     </Card>
@@ -185,7 +185,7 @@ export default function Dashboard() {
                             <Calendar className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-purple-600">${formatCurrency(statistics.monthSales)}</div>
+                            <div className="text-2xl font-bold text-purple-600">{formatCurrency(statistics.monthSales)}</div>
                             <p className="text-xs text-muted-foreground">Month to date sales</p>
                         </CardContent>
                     </Card>
@@ -213,13 +213,13 @@ export default function Dashboard() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-emerald-600">
-                                ${formatCurrency(statistics.monthSales - statistics.monthRefunds)}
+                                {formatCurrency(statistics.monthSales - statistics.monthRefunds)}
                             </div>
                             <p className="text-xs text-muted-foreground">Sales minus refunds for this month</p>
                             <div className="mt-2 flex items-center gap-2 text-xs">
-                                <span className="font-medium text-green-600">${formatCurrency(statistics.monthSales)} sales</span>
+                                <span className="font-medium text-green-600">{formatCurrency(statistics.monthSales)} sales</span>
                                 <span className="text-gray-400">-</span>
-                                <span className="font-medium text-red-500">${formatCurrency(statistics.monthRefunds)} refunds</span>
+                                <span className="font-medium text-red-500">{formatCurrency(statistics.monthRefunds)} refunds</span>
                             </div>
                         </CardContent>
                     </Card>
@@ -251,7 +251,7 @@ export default function Dashboard() {
                             <RotateCcw className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-red-600">${formatCurrency(statistics.todayRefunds)}</div>
+                            <div className="text-2xl font-bold text-red-600">{formatCurrency(statistics.todayRefunds)}</div>
                             <p className="text-xs text-muted-foreground">Refunds processed today</p>
                         </CardContent>
                     </Card>
@@ -263,7 +263,7 @@ export default function Dashboard() {
                             <RotateCcw className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-red-500">${formatCurrency(statistics.weekRefunds)}</div>
+                            <div className="text-2xl font-bold text-red-500">{formatCurrency(statistics.weekRefunds)}</div>
                             <p className="text-xs text-muted-foreground">Week to date refunds</p>
                         </CardContent>
                     </Card>
@@ -275,7 +275,7 @@ export default function Dashboard() {
                             <RotateCcw className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-red-400">${formatCurrency(statistics.monthRefunds)}</div>
+                            <div className="text-2xl font-bold text-red-400">{formatCurrency(statistics.monthRefunds)}</div>
                             <p className="text-xs text-muted-foreground">Month to date refunds</p>
                         </CardContent>
                     </Card>
@@ -322,7 +322,7 @@ export default function Dashboard() {
                                                 <p className="text-sm text-muted-foreground">{product.total_sold} units sold</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="font-bold text-green-600">${formatCurrency(product.revenue)}</p>
+                                                <p className="font-bold text-green-600">{formatCurrency(product.revenue)}</p>
                                                 <Badge variant="secondary">{index + 1}</Badge>
                                             </div>
                                         </div>

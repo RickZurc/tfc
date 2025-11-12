@@ -14,7 +14,7 @@ import { useState } from 'react';
 // Helper function to safely format currency
 const formatCurrency = (value: string | number | null | undefined): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
-    return isNaN(num as number) || num === null || num === undefined ? '0.00' : (num as number).toFixed(2);
+    return isNaN(num as number) || num === null || num === undefined ? '0.00 €' : (num as number).toFixed(2) + ' €';
 };
 
 // Helper function to format date
@@ -170,11 +170,11 @@ export default function OrderShow() {
                   <div class="item-name">${item.product_name}</div>
                   <div class="row">
                     <span>SKU: ${item.product_sku}</span>
-                    <span>${item.quantity}x $${formatCurrency(item.unit_price)}</span>
+                    <span>${item.quantity}x ${formatCurrency(item.unit_price)}</span>
                   </div>
                   <div class="row">
                     <span></span>
-                    <span>$${formatCurrency(item.total_price)}</span>
+                    <span>${formatCurrency(item.total_price)}</span>
                   </div>
                 </div>
               `,
@@ -185,14 +185,14 @@ export default function OrderShow() {
             <div class="section">
               <div class="row">
                 <span>Subtotal:</span>
-                <span>$${formatCurrency(order.subtotal)}</span>
+                <span>${formatCurrency(order.subtotal)}</span>
               </div>
               ${
                   order.tax_amount > 0
                       ? `
               <div class="row">
                 <span>Tax:</span>
-                <span>$${formatCurrency(order.tax_amount)}</span>
+                <span>${formatCurrency(order.tax_amount)}</span>
               </div>
               `
                       : ''
@@ -202,25 +202,25 @@ export default function OrderShow() {
                       ? `
               <div class="row">
                 <span>Discount:</span>
-                <span>-$${formatCurrency(order.discount_amount)}</span>
+                <span>-${formatCurrency(order.discount_amount)}</span>
               </div>
               `
                       : ''
               }
               <div class="row total">
                 <span>TOTAL:</span>
-                <span>$${formatCurrency(order.total_amount)}</span>
+                <span>${formatCurrency(order.total_amount)}</span>
               </div>
               <div class="row">
                 <span>Amount Paid:</span>
-                <span>$${formatCurrency(order.amount_paid)}</span>
+                <span>${formatCurrency(order.amount_paid)}</span>
               </div>
               ${
                   order.change_amount > 0
                       ? `
               <div class="row">
                 <span>Change:</span>
-                <span>$${formatCurrency(order.change_amount)}</span>
+                <span>${formatCurrency(order.change_amount)}</span>
               </div>
               `
                       : ''
@@ -272,7 +272,7 @@ export default function OrderShow() {
         const amount = parseFloat(refundAmount);
         if (isNaN(amount) || amount <= 0 || amount > order.total_amount) {
             setRefundErrors({
-                refund_amount: [`Refund amount must be between $0.01 and $${formatCurrency(order.total_amount)}`],
+                refund_amount: [`Refund amount must be between $0.01 and ${formatCurrency(order.total_amount)}`],
                 refund_reason: [],
             });
             return;
@@ -469,12 +469,12 @@ export default function OrderShow() {
                                                                 SKU: {item.product_sku} • Category: {item.product.category.name}
                                                             </p>
                                                             <p className="text-sm text-muted-foreground">
-                                                                ${formatCurrency(item.unit_price)} each
+                                                                {formatCurrency(item.unit_price)} each
                                                                 {item.tax_rate > 0 && ` • Tax: ${item.tax_rate}%`}
                                                             </p>
                                                             {isPartiallyRefunded && (
                                                                 <p className="text-sm text-orange-600">
-                                                                    Refunded: {refundedQty} of {item.quantity} • ${formatCurrency(item.refunded_amount || 0)}
+                                                                    Refunded: {refundedQty} of {item.quantity} • {formatCurrency(item.refunded_amount || 0)}
                                                                 </p>
                                                             )}
                                                             {isFullyRefunded && item.refund_reason && (
@@ -492,9 +492,9 @@ export default function OrderShow() {
                                                                 Qty: {item.quantity}
                                                                 {isPartiallyRefunded && ` (${remainingQty} remaining)`}
                                                             </p>
-                                                            <p className="text-lg font-semibold">${formatCurrency(item.total_price)}</p>
+                                                            <p className="text-lg font-semibold">{formatCurrency(item.total_price)}</p>
                                                             {item.tax_amount > 0 && (
-                                                                <p className="text-xs text-muted-foreground">Tax: ${formatCurrency(item.tax_amount)}</p>
+                                                                <p className="text-xs text-muted-foreground">Tax: {formatCurrency(item.tax_amount)}</p>
                                                             )}
                                                         </div>
                                                         {order.status === 'completed' && remainingQty > 0 && (
@@ -541,31 +541,31 @@ export default function OrderShow() {
                                 <div className="space-y-2">
                                     <div className="flex justify-between">
                                         <span>Subtotal:</span>
-                                        <span>${formatCurrency(order.subtotal)}</span>
+                                        <span>{formatCurrency(order.subtotal)}</span>
                                     </div>
                                     {order.tax_amount > 0 && (
                                         <div className="flex justify-between">
                                             <span>Tax:</span>
-                                            <span>${formatCurrency(order.tax_amount)}</span>
+                                            <span>{formatCurrency(order.tax_amount)}</span>
                                         </div>
                                     )}
                                     {order.discount_amount > 0 && (
                                         <div className="flex justify-between text-yellow-600">
                                             <span>Discount:</span>
-                                            <span>-${formatCurrency(order.discount_amount)}</span>
+                                            <span>-{formatCurrency(order.discount_amount)}</span>
                                         </div>
                                     )}
                                     <Separator />
                                     <div className="flex justify-between text-lg font-bold">
                                         <span>Total:</span>
-                                        <span>${formatCurrency(order.total_amount)}</span>
+                                        <span>{formatCurrency(order.total_amount)}</span>
                                     </div>
                                     {order.refund_amount && (
                                         <>
                                             <Separator />
                                             <div className="flex justify-between text-red-600 font-semibold">
                                                 <span>Refund Amount:</span>
-                                                <span>-${formatCurrency(order.refund_amount)}</span>
+                                                <span>-{formatCurrency(order.refund_amount)}</span>
                                             </div>
                                         </>
                                     )}
@@ -588,12 +588,12 @@ export default function OrderShow() {
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Amount Paid:</span>
-                                    <span className="font-medium">${formatCurrency(order.amount_paid)}</span>
+                                    <span className="font-medium">{formatCurrency(order.amount_paid)}</span>
                                 </div>
                                 {order.change_amount > 0 && (
                                     <div className="flex justify-between text-green-600">
                                         <span>Change Given:</span>
-                                        <span className="font-medium">${formatCurrency(order.change_amount)}</span>
+                                        <span className="font-medium">{formatCurrency(order.change_amount)}</span>
                                     </div>
                                 )}
                             </CardContent>
@@ -611,7 +611,7 @@ export default function OrderShow() {
                                 <CardContent className="space-y-3">
                                     <div className="flex justify-between">
                                         <span>Refund Amount:</span>
-                                        <span className="font-medium text-red-600">${formatCurrency(order.refund_amount)}</span>
+                                        <span className="font-medium text-red-600">{formatCurrency(order.refund_amount)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span>Refund Date:</span>
@@ -715,7 +715,7 @@ export default function OrderShow() {
                     <DialogHeader>
                         <DialogTitle>Refund Order {order.order_number}</DialogTitle>
                         <DialogDescription>
-                            Process a refund for this order. The maximum refund amount is ${formatCurrency(order.total_amount)}.
+                            Process a refund for this order. The maximum refund amount is {formatCurrency(order.total_amount)}.
                         </DialogDescription>
                     </DialogHeader>
                     
@@ -764,7 +764,7 @@ export default function OrderShow() {
                             disabled={isProcessingRefund}
                             className="bg-red-600 hover:bg-red-700"
                         >
-                            {isProcessingRefund ? 'Processing...' : `Refund $${formatCurrency(refundAmount)}`}
+                            {isProcessingRefund ? 'Processing...' : `Refund ${formatCurrency(refundAmount)}`}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -785,7 +785,7 @@ export default function OrderShow() {
                             <div className="rounded-lg border p-3 bg-muted/50">
                                 <p className="font-medium">{selectedItem.product_name}</p>
                                 <p className="text-sm text-muted-foreground">
-                                    Original quantity: {selectedItem.quantity} • Unit price: ${formatCurrency(selectedItem.unit_price)}
+                                    Original quantity: {selectedItem.quantity} • Unit price: {formatCurrency(selectedItem.unit_price)}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
                                     Already refunded: {selectedItem.refunded_quantity || 0} • Available: {selectedItem.quantity - (selectedItem.refunded_quantity || 0)}
@@ -804,7 +804,7 @@ export default function OrderShow() {
                                     placeholder="Enter quantity"
                                 />
                                 <p className="text-sm text-muted-foreground">
-                                    Refund amount: ${formatCurrency((parseFloat(partialRefundQuantity) || 0) * selectedItem.unit_price)}
+                                    Refund amount: {formatCurrency((parseFloat(partialRefundQuantity) || 0) * selectedItem.unit_price)}
                                 </p>
                             </div>
 

@@ -6,7 +6,7 @@ import { CheckCircle, Receipt } from 'lucide-react';
 // Helper function to safely format currency
 const formatCurrency = (value: number | string): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
-    return isNaN(num) ? '0.00' : num.toFixed(2);
+    return isNaN(num) ? '0.00 €' : num.toFixed(2) + ' €';
 };
 
 interface CompletedOrder {
@@ -58,30 +58,30 @@ export default function SaleCompletionModal({ isOpen, completedOrder, onClose, o
                             <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium text-gray-600">Subtotal:</span>
                                 <span className="text-sm font-semibold text-gray-900">
-                                    ${formatCurrency(completedOrder.subtotal || completedOrder.originalSubtotal || 0)}
+                                    {formatCurrency(completedOrder.subtotal || completedOrder.originalSubtotal || 0)}
                                 </span>
                             </div>
                             {((completedOrder.discount_amount || 0) > 0 || (completedOrder.originalDiscount || 0) > 0) && (
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm font-medium text-gray-600">Discount:</span>
                                     <span className="text-sm font-semibold text-red-600">
-                                        -${formatCurrency(completedOrder.discount_amount || completedOrder.originalDiscount || 0)}
+                                        -{formatCurrency(completedOrder.discount_amount || completedOrder.originalDiscount || 0)}
                                     </span>
                                 </div>
                             )}
                             <Separator />
                             <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium text-gray-600">Total Amount:</span>
-                                <span className="text-lg font-bold text-gray-900">${formatCurrency(completedOrder.total_amount)}</span>
+                                <span className="text-lg font-bold text-gray-900">{formatCurrency(completedOrder.total_amount)}</span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium text-gray-600">Amount Paid:</span>
-                                <span className="text-sm font-semibold text-gray-900">${formatCurrency(completedOrder.amount_paid)}</span>
+                                <span className="text-sm font-semibold text-gray-900">{formatCurrency(completedOrder.amount_paid)}</span>
                             </div>
                             {(completedOrder.change_amount || 0) > 0 && (
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm font-medium text-gray-600">Change:</span>
-                                    <span className="text-sm font-semibold text-green-600">${formatCurrency(completedOrder.change_amount || 0)}</span>
+                                    <span className="text-sm font-semibold text-green-600">{formatCurrency(completedOrder.change_amount || 0)}</span>
                                 </div>
                             )}
                             <div className="flex items-center justify-between">

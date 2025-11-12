@@ -76,7 +76,7 @@ export default function ShowCategory() {
 
     const formatCurrency = (value: number | string | null | undefined): string => {
         const num = typeof value === 'string' ? parseFloat(value) : value;
-        return isNaN(num) || num === null || num === undefined ? '0.00' : num.toFixed(2);
+        return isNaN(num as number) || num === null || num === undefined ? '0.00 €' : (num as number).toFixed(2) + ' €';
     };
 
     const formatDate = (dateString: string): string => {
@@ -163,7 +163,7 @@ export default function ShowCategory() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
-                                    <p className="text-2xl font-bold">${formatCurrency(stats.total_sales)}</p>
+                                    <p className="text-2xl font-bold">{formatCurrency(stats.total_sales)}</p>
                                 </div>
                                 <DollarSign className="h-8 w-8 text-orange-600" />
                             </div>
@@ -246,7 +246,7 @@ export default function ShowCategory() {
                                             <div>
                                                 <p className="font-medium">{product.name}</p>
                                                 <p className="text-sm text-muted-foreground">
-                                                    SKU: {product.sku} • ${formatCurrency(parseFloat(product.price))}
+                                                    SKU: {product.sku} • {formatCurrency(parseFloat(product.price))}
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-2">

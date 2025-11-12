@@ -18,7 +18,7 @@ import SaleCompletionModal from '@/components/pos/SaleCompletionModal';
 // Helper function to safely format currency
 const formatCurrency = (value: any): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value;
-  return isNaN(num) ? '0.00' : num.toFixed(2);
+  return isNaN(num) ? '0.00 €' : num.toFixed(2) + ' €';
 };
 
 interface Category {
@@ -236,7 +236,7 @@ export default function POSIndex() {
       setPaymentError('');
     }
     if (amountPaidNum > 0 && amountPaidNum < total) {
-      setPaymentError(`Insufficient payment. $${formatCurrency(total - amountPaidNum)} short.`);
+      setPaymentError(`Insufficient payment. ${formatCurrency(total - amountPaidNum)} short.`);
     } else if (paymentError && isPaymentSufficient) {
       setPaymentError('');
     }
@@ -268,24 +268,24 @@ export default function POSIndex() {
             </div>
             <div class="row">
               <span>Subtotal:</span>
-              <span>$${formatCurrency(completedOrder.subtotal || completedOrder.originalSubtotal)}</span>
+              <span>${formatCurrency(completedOrder.subtotal || completedOrder.originalSubtotal)}</span>
             </div>
             <div class="row">
               <span>Discount:</span>
-              <span>-$${formatCurrency(completedOrder.discount_amount || completedOrder.originalDiscount)}</span>
+              <span>-${formatCurrency(completedOrder.discount_amount || completedOrder.originalDiscount)}</span>
             </div>
             <div class="row total">
               <span>TOTAL:</span>
-              <span>$${formatCurrency(completedOrder.total_amount)}</span>
+              <span>${formatCurrency(completedOrder.total_amount)}</span>
             </div>
             <div class="row">
               <span>Amount Paid:</span>
-              <span>$${formatCurrency(completedOrder.amount_paid)}</span>
+              <span>${formatCurrency(completedOrder.amount_paid)}</span>
             </div>
             ${(completedOrder.change_amount || 0) > 0 ? `
             <div class="row">
               <span>Change:</span>
-              <span>$${formatCurrency(completedOrder.change_amount)}</span>
+              <span>${formatCurrency(completedOrder.change_amount)}</span>
             </div>
             ` : ''}
             <div class="row">
@@ -312,7 +312,7 @@ export default function POSIndex() {
     
     // Frontend validation - check if payment is sufficient
     if (!isPaymentSufficient) {
-      setPaymentError(`Insufficient payment. Total is $${formatCurrency(total)}, but only $${formatCurrency(amountPaidNum)} was provided.`);
+      setPaymentError(`Insufficient payment. Total is ${formatCurrency(total)}, but only ${formatCurrency(amountPaidNum)} was provided.`);
       return;
     }
     

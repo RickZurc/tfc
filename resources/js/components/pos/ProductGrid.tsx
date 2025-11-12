@@ -6,7 +6,7 @@ import { Product, CartItem } from '@/types/pos';
 // Helper function to safely format currency
 const formatCurrency = (value: any): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value;
-  return isNaN(num) ? '0.00' : num.toFixed(2);
+  return isNaN(num) ? '0.00 €' : num.toFixed(2) + ' €';
 };
 
 interface ProductGridProps {
@@ -47,11 +47,11 @@ export default function ProductGrid({ products, cart, onAddToCart }: ProductGrid
                   {product.has_active_discount ? (
                     <>
                       <span className="text-lg font-bold text-primary">
-                        ${formatCurrency(product.current_price)}
+                        {formatCurrency(product.current_price)}
                       </span>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground line-through">
-                          ${formatCurrency(product.price)}
+                          {formatCurrency(product.price)}
                         </span>
                         <Badge variant="destructive" className="text-xs px-1 py-0">
                           -{Math.round(product.discount_percentage || 0)}%
@@ -60,7 +60,7 @@ export default function ProductGrid({ products, cart, onAddToCart }: ProductGrid
                     </>
                   ) : (
                     <span className="text-lg font-bold text-primary">
-                      ${formatCurrency(product.price)}
+                      {formatCurrency(product.price)}
                     </span>
                   )}
                 </div>

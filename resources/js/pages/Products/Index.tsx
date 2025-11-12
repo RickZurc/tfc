@@ -204,10 +204,11 @@ export default function ProductsIndex({ products, categories, filters }: Props) 
 
     const formatCurrency = (amount: string) => {
         const num = parseFloat(amount || '0');
-        return new Intl.NumberFormat('en-US', {
+        return new Intl.NumberFormat('de-DE', {
             style: 'currency',
-            currency: 'USD',
-        }).format(num);
+            currency: 'EUR',
+            currencyDisplay: 'code',
+        }).format(num).replace('EUR', '').trim() + ' €';
     };
 
     const getStockStatus = (product: Product) => {

@@ -44,7 +44,7 @@ export default function CartRestoreDialog({ isOpen, cartBackupInfo, onClose, onS
                             {cartBackupInfo.discount_amount && cartBackupInfo.discount_amount !== '0' && (
                                 <div className="flex justify-between text-sm">
                                     <span className="font-medium">Discount:</span>
-                                    <span>${cartBackupInfo.discount_amount}</span>
+                                    <span>{cartBackupInfo.discount_amount} €</span>
                                 </div>
                             )}
                         </div>
